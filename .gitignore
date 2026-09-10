@@ -10,3 +10,6 @@ CLAUDE.md
 .claude/
 result.json
 compose.critique.yml
+
+# build-process spec, kept out of the published repo
+EPIC_SPEC.md
