@@ -11,6 +11,7 @@
     "dev:server": "tsx watch server/index.ts",
     "build": "vite build",
     "start": "tsx server/index.ts",
+    "start:e2e": "tsx e2e/serve.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
