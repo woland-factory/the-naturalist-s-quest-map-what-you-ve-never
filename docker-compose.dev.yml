@@ -1,0 +1,19 @@
+name: the-naturalist-s-quest-map-what-you-ve-never-dev
+services:
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    # Hot reload for both the API (tsx watch) and the frontend (Vite). Vite
+    # proxies /api to the API on 127.0.0.1 inside this container.
+    command: sh -c "npm install && (npm run dev:server & npm run dev:web -- --host 0.0.0.0)"
+    environment:
+      PORT: "8080"
+      INAT_USER_AGENT: "naturalist-quest-map (dev)"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      # Bind to loopback only; published ports bypass the host firewall.
+      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped

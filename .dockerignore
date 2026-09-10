@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+tests
+e2e
+playwright-report
+test-results
+coverage
+.claude
+CLAUDE.md
+result.json
+compose.critique.yml
+*.md
+.env

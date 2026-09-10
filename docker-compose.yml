@@ -1,0 +1,28 @@
+name: the-naturalist-s-quest-map-what-you-ve-never-prod
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: "80"
+      INAT_API_BASE: ${INAT_API_BASE:-https://api.inaturalist.org/v1}
+      INAT_RATE_LIMIT_RPS: ${INAT_RATE_LIMIT_RPS:-1}
+      INAT_USER_AGENT: ${INAT_USER_AGENT:-naturalist-quest-map}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
+      UMAMI_URL: ${UMAMI_URL:-}
+    expose:
+      - "80"
+    networks:
+      - default
+      - proxy_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  proxy_network:
+    external: true
