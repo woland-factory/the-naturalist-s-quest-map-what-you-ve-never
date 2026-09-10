@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
 export default [
   {
@@ -8,10 +9,15 @@ export default [
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: "module",
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+      },
     },
     rules: {
+      // TypeScript's own compiler enforces unused/undefined; keep ESLint to
+      // real logic smells and let tsc own the type surface.
       "no-unused-vars": "off",
       "no-undef": "off",
     },

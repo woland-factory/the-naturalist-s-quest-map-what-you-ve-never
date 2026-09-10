@@ -61,6 +61,5 @@ mock.listen(0, "127.0.0.1", async () => {
 
   const app = await buildApp({ config: loadConfig() });
   await app.listen({ port, host: "127.0.0.1" });
-  // eslint-disable-next-line no-console
   console.log(`e2e app on :${port}, iNat stub on :${mockPort}`);
 });

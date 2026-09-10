@@ -41,7 +41,7 @@ function makeFetch(opts: FetchOpts = {}) {
     }
     return resp(404, {});
   });
-  return { fetchImpl, calls };
+  return { fetchImpl: fetchImpl as unknown as typeof fetch, calls };
 }
 
 function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {

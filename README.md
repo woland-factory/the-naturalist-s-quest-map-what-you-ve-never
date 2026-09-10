@@ -63,12 +63,12 @@ Or run both in a container with `docker compose -f docker-compose.dev.yml up`.
 Every setting has a safe default. See `.env.example` for the full list. The
 ones you are most likely to change:
 
-- `INAT_USER_AGENT` — a polite identifier with a contact address, sent on
+- `INAT_USER_AGENT`: a polite identifier with a contact address, sent on
   every iNaturalist request.
-- `SENTRY_DSN` — error tracking. Unset means error tracking is off.
-- `UMAMI_WEBSITE_ID` and `UMAMI_URL` — privacy-friendly analytics. Unset means
+- `SENTRY_DSN`: error tracking. Unset means error tracking is off.
+- `UMAMI_WEBSITE_ID` and `UMAMI_URL`: privacy-friendly analytics. Unset means
   no analytics script loads.
-- `SEED_DEMO` — set to `1` to preload the example quest on boot.
+- `SEED_DEMO`: set to `1` to preload the example quest on boot.
 
 No secret is ever committed. `.env` stays out of git; `.env.example` holds
 placeholders only.
@@ -87,10 +87,10 @@ on your machine.
 
 ## Where the code lives
 
-- `server/` — Fastify app, routes, the iNaturalist adapter (`inat/client.ts`),
+- `server/`: Fastify app, routes, the iNaturalist adapter (`inat/client.ts`),
   the ranking core (`inat/ranking.ts`), and the in-memory cache.
-- `web/` — the React frontend (start screen, results screen, designed states).
-- `tests/` — unit and integration tests. `e2e/` — Playwright specs and the
+- `web/`: the React frontend (start screen, results screen, designed states).
+- `tests/`: unit and integration tests. `e2e/`: Playwright specs and the
   test harness.
 
 Contributions are welcome. Run the tests before opening a pull request. This
