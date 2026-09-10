@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.log
+coverage/
+test-results/
+playwright-report/
+.playwright/
+CLAUDE.md
+.claude/
+result.json
+compose.critique.yml
