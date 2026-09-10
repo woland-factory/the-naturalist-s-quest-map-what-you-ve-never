@@ -42,7 +42,7 @@ test("builds a fresh quest from the start screen", async ({ page }) => {
   await page.getByRole("button", { name: "Back" }).click();
 
   await page.getByLabel("iNaturalist username").fill("somenaturalist");
-  await page.getByRole("combobox").fill("Cali");
+  await page.getByLabel("Place").fill("Cali");
   await page.getByRole("option", { name: /California/ }).click();
   await page.getByLabel("Month").selectOption("5");
   await page.getByRole("button", { name: "Build my quest" }).click();
@@ -54,6 +54,11 @@ test("builds a fresh quest from the start screen", async ({ page }) => {
 test("validates the form before calling the API", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Back" }).click();
+  // Returning to Start keeps the last quest pre-filled, so clear the fields
+  // to exercise the empty-field validation.
+  await page.getByLabel("iNaturalist username").fill("");
+  await page.getByLabel("Place").fill("");
+  await page.getByLabel("Month").selectOption("");
   await page.getByRole("button", { name: "Build my quest" }).click();
   await expect(page.getByText("Enter a valid iNaturalist username.")).toBeVisible();
   await expect(page.getByText("Pick a place.")).toBeVisible();
@@ -65,7 +70,7 @@ test("shows the check-the-username message for an unknown user", async ({ page }
   await page.getByRole("button", { name: "Back" }).click();
 
   await page.getByLabel("iNaturalist username").fill("ghostuserzzz");
-  await page.getByRole("combobox").fill("Cali");
+  await page.getByLabel("Place").fill("Cali");
   await page.getByRole("option", { name: /California/ }).click();
   await page.getByLabel("Month").selectOption("7");
   await page.getByRole("button", { name: "Build my quest" }).click();
