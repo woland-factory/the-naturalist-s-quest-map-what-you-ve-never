@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { monthLabel } from "../months.js";
 import type { Target, TargetsResponse } from "../types.js";
 
@@ -136,13 +137,23 @@ function TargetList({
 }
 
 function TargetCard({ target, rank }: { target: Target; rank: number }) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const showPhoto = target.photoUrl && !photoFailed;
   return (
     <li className="target-card">
       <span className="rank" aria-hidden="true">
         {rank}
       </span>
-      {target.photoUrl ? (
-        <img className="thumb" src={target.photoUrl} alt={target.commonName} loading="lazy" width={64} height={64} />
+      {showPhoto ? (
+        <img
+          className="thumb"
+          src={target.photoUrl ?? undefined}
+          alt={target.commonName}
+          loading="lazy"
+          width={64}
+          height={64}
+          onError={() => setPhotoFailed(true)}
+        />
       ) : (
         <div className="thumb thumb-empty" aria-hidden="true">
           {target.commonName.slice(0, 1)}

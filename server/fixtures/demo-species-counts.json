@@ -1,393 +1,391 @@
 {
-  "total_results": 8421,
+  "total_results": 15592,
   "results": [
     {
-      "count": 900,
+      "count": 2583,
       "taxon": {
-        "id": 1000,
-        "name": "Danaus plexippus",
-        "preferred_common_name": "Monarch",
+        "id": 57665,
+        "name": "Cotinis mutabilis",
+        "preferred_common_name": "Figeater Beetle",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200000/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200000/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200000/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/59765263/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/59765263/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/59765263/square.jpg"
         }
       }
     },
     {
-      "count": 878,
+      "count": 2254,
       "taxon": {
-        "id": 1001,
-        "name": "Sceloporus occidentalis",
-        "preferred_common_name": "Western Fence Lizard",
+        "id": 52158,
+        "name": "Schistocerca nitens",
+        "preferred_common_name": "Gray Bird Grasshopper",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200001/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200001/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200001/thumb.jpg"
+          "square_url": "https://static.inaturalist.org/photos/376218071/square.jpg",
+          "medium_url": "https://static.inaturalist.org/photos/376218071/medium.jpg",
+          "url": "https://static.inaturalist.org/photos/376218071/square.jpg"
         }
       }
     },
     {
-      "count": 856,
+      "count": 2176,
       "taxon": {
-        "id": 1002,
-        "name": "Sayornis nigricans",
-        "preferred_common_name": "Black Phoebe",
+        "id": 47383,
+        "name": "Latrodectus geometricus",
+        "preferred_common_name": "Brown Widow",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200002/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200002/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200002/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/29119102/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/29119102/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/29119102/square.jpg"
         }
       }
     },
     {
-      "count": 819,
+      "count": 1936,
       "taxon": {
-        "id": 1003,
-        "name": "Aphelocoma californica",
-        "preferred_common_name": "California Scrub-Jay",
+        "id": 428606,
+        "name": "Heraclides rumiko",
+        "preferred_common_name": "Western Giant Swallowtail",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200003/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200003/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200003/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2898067/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2898067/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2898067/square.jpg"
         }
       }
     },
     {
-      "count": 797,
+      "count": 1697,
       "taxon": {
-        "id": 1004,
-        "name": "Eschscholzia californica",
-        "preferred_common_name": "California Poppy",
+        "id": 117308,
+        "name": "Chlorophyllum molybdites",
+        "preferred_common_name": "Green-spored Parasol",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200004/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200004/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200004/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/4133009/square.",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/4133009/medium.",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/4133009/square."
         }
       }
     },
     {
-      "count": 775,
+      "count": 1445,
       "taxon": {
-        "id": 1005,
-        "name": "Buteo jamaicensis",
-        "preferred_common_name": "Red-tailed Hawk",
+        "id": 489730,
+        "name": "Paropsis atomaria",
+        "preferred_common_name": "Dotted Paropsine Leaf Beetle",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200005/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200005/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200005/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/149101712/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/149101712/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/149101712/square.jpg"
         }
       }
     },
     {
-      "count": 738,
+      "count": 991,
       "taxon": {
-        "id": 1006,
-        "name": "Cathartes aura",
-        "preferred_common_name": "Turkey Vulture",
+        "id": 51221,
+        "name": "Procambarus clarkii",
+        "preferred_common_name": "Red Swamp Crayfish",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200006/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200006/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200006/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/93264590/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/93264590/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/93264590/square.jpg"
         }
       }
     },
     {
-      "count": 716,
+      "count": 942,
       "taxon": {
-        "id": 1007,
-        "name": "Pituophis catenifer",
-        "preferred_common_name": "Gophersnake",
+        "id": 154340,
+        "name": "Gryllodes sigillatus",
+        "preferred_common_name": "Tropical House Cricket",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200007/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200007/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200007/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/319071752/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/319071752/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/319071752/square.jpg"
         }
       }
     },
     {
-      "count": 694,
+      "count": 928,
       "taxon": {
-        "id": 1008,
-        "name": "Thamnophis sirtalis",
-        "preferred_common_name": "Common Garter Snake",
+        "id": 13893,
+        "name": "Lonchura punctulata",
+        "preferred_common_name": "Scaly-breasted Munia",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200008/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200008/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200008/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161725682/square.jpeg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161725682/medium.jpeg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161725682/square.jpeg"
         }
       }
     },
     {
-      "count": 657,
+      "count": 914,
       "taxon": {
-        "id": 1009,
-        "name": "Anna hummingbird",
-        "preferred_common_name": "Annas Hummingbird",
+        "id": 78631,
+        "name": "Plumbago auriculata",
+        "preferred_common_name": "blue plumbago",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200009/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200009/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200009/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/170645472/square.jpeg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/170645472/medium.jpeg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/170645472/square.jpeg"
         }
       }
     },
     {
-      "count": 635,
+      "count": 847,
       "taxon": {
-        "id": 1010,
-        "name": "Lynx rufus",
-        "preferred_common_name": "Bobcat",
+        "id": 154551,
+        "name": "Leptoglossus zonatus",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200010/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200010/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200010/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/95890152/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/95890152/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/95890152/square.jpg"
         }
       }
     },
     {
-      "count": 613,
+      "count": 801,
       "taxon": {
-        "id": 1011,
-        "name": "Odocoileus hemionus",
-        "preferred_common_name": "Mule Deer",
+        "id": 82689,
+        "name": "Arbutus unedo",
+        "preferred_common_name": "strawberry tree",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200011/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200011/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200011/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/587076789/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/587076789/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/587076789/square.jpg"
         }
       }
     },
     {
-      "count": 576,
+      "count": 787,
       "taxon": {
-        "id": 1012,
-        "name": "Sciurus griseus",
-        "preferred_common_name": "Western Gray Squirrel",
+        "id": 78266,
+        "name": "Opuntia littoralis",
+        "preferred_common_name": "Coastal Pricklypear",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200012/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200012/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200012/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/157442848/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/157442848/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/157442848/square.jpg"
         }
       }
     },
     {
-      "count": 554,
+      "count": 730,
       "taxon": {
-        "id": 1013,
-        "name": "Pandion haliaetus",
-        "preferred_common_name": "Osprey",
+        "id": 296456,
+        "name": "Incisitermes minor",
+        "preferred_common_name": "Western Drywood Termite",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200013/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200013/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200013/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11029007/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11029007/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11029007/square.jpg"
         }
       }
     },
     {
-      "count": 532,
+      "count": 696,
       "taxon": {
-        "id": 1014,
-        "name": "Ardea herodias",
-        "preferred_common_name": "Great Blue Heron",
+        "id": 127669,
+        "name": "Jadera haematoloma",
+        "preferred_common_name": "Red-shouldered Bug",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200014/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200014/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200014/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/109817/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/109817/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/109817/square.jpg"
         }
       }
     },
     {
-      "count": 495,
+      "count": 685,
       "taxon": {
-        "id": 1015,
-        "name": "Egretta thula",
-        "preferred_common_name": "Snowy Egret",
+        "id": 58010,
+        "name": "Lepidospartum squamatum",
+        "preferred_common_name": "California Broomsage",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200015/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200015/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200015/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161153/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161153/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161153/square.jpg"
         }
       }
     },
     {
-      "count": 473,
+      "count": 658,
       "taxon": {
-        "id": 1016,
-        "name": "Pelecanus occidentalis",
-        "preferred_common_name": "Brown Pelican",
+        "id": 58271,
+        "name": "Eriogonum elongatum",
+        "preferred_common_name": "Long-stemmed Buckwheat",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200016/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200016/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200016/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/94384869/square.jpeg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/94384869/medium.jpeg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/94384869/square.jpeg"
         }
       }
     },
     {
-      "count": 451,
+      "count": 654,
       "taxon": {
-        "id": 1017,
-        "name": "Phalacrocorax auritus",
-        "preferred_common_name": "Double-crested Cormorant",
+        "id": 54503,
+        "name": "Juglans californica",
+        "preferred_common_name": "Southern California Walnut",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200017/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200017/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200017/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/7086/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/7086/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/7086/square.jpg"
         }
       }
     },
     {
-      "count": 414,
+      "count": 630,
       "taxon": {
-        "id": 1018,
-        "name": "Zalophus californianus",
-        "preferred_common_name": "California Sea Lion",
+        "id": 53693,
+        "name": "Hypsypops rubicundus",
+        "preferred_common_name": "Garibaldi",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200018/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200018/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200018/thumb.jpg"
+          "square_url": "https://static.inaturalist.org/photos/410429697/square.jpg",
+          "medium_url": "https://static.inaturalist.org/photos/410429697/medium.jpg",
+          "url": "https://static.inaturalist.org/photos/410429697/square.jpg"
         }
       }
     },
     {
-      "count": 392,
+      "count": 628,
       "taxon": {
-        "id": 1019,
-        "name": "Enhydra lutris",
-        "preferred_common_name": "Sea Otter",
+        "id": 16611,
+        "name": "Empidonax traillii",
+        "preferred_common_name": "Willow Flycatcher",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200019/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200019/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200019/thumb.jpg"
+          "square_url": "https://static.inaturalist.org/photos/490730785/square.jpg",
+          "medium_url": "https://static.inaturalist.org/photos/490730785/medium.jpg",
+          "url": "https://static.inaturalist.org/photos/490730785/square.jpg"
         }
       }
     },
     {
-      "count": 370,
+      "count": 606,
       "taxon": {
-        "id": 1020,
-        "name": "Taricha torosa",
-        "preferred_common_name": "California Newt",
+        "id": 157990,
+        "name": "Menemerus semilimbatus",
+        "preferred_common_name": "Half-edged Wall Jumping Spider",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200020/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200020/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200020/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348113383/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348113383/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348113383/square.jpg"
         }
       }
     },
     {
-      "count": 333,
+      "count": 606,
       "taxon": {
-        "id": 1021,
-        "name": "Batrachoseps attenuatus",
-        "preferred_common_name": "California Slender Salamander",
+        "id": 197039,
+        "name": "Condylostylus longicornis",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200021/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200021/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200021/thumb.jpg"
+          "square_url": "https://static.inaturalist.org/photos/4354254/square.jpg",
+          "medium_url": "https://static.inaturalist.org/photos/4354254/medium.jpg",
+          "url": "https://static.inaturalist.org/photos/4354254/square.jpg"
         }
       }
     },
     {
-      "count": 311,
+      "count": 594,
       "taxon": {
-        "id": 1022,
-        "name": "Papilio rutulus",
-        "preferred_common_name": "Western Tiger Swallowtail",
+        "id": 50333,
+        "name": "Lantana camara",
+        "preferred_common_name": "common lantana",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200022/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200022/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200022/thumb.jpg"
+          "square_url": "https://static.inaturalist.org/photos/369564698/square.jpeg",
+          "medium_url": "https://static.inaturalist.org/photos/369564698/medium.jpeg",
+          "url": "https://static.inaturalist.org/photos/369564698/square.jpeg"
         }
       }
     },
     {
-      "count": 289,
+      "count": 566,
       "taxon": {
-        "id": 1023,
-        "name": "Vanessa cardui",
-        "preferred_common_name": "Painted Lady",
+        "id": 321642,
+        "name": "Cylindropuntia fosbergii",
+        "preferred_common_name": "Mason Valley Cholla",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200023/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200023/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200023/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/35178409/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/35178409/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/35178409/square.jpg"
         }
       }
     },
     {
-      "count": 252,
+      "count": 556,
       "taxon": {
-        "id": 1024,
-        "name": "Bombus vosnesenskii",
-        "preferred_common_name": "Yellow-faced Bumble Bee",
+        "id": 78362,
+        "name": "Pectis papposa",
+        "preferred_common_name": "Chinchweed",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200024/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200024/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200024/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/13044054/square.jpeg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/13044054/medium.jpeg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/13044054/square.jpeg"
         }
       }
     },
     {
-      "count": 230,
+      "count": 551,
       "taxon": {
-        "id": 1025,
-        "name": "Argiope aurantia",
-        "preferred_common_name": "Yellow Garden Spider",
+        "id": 55421,
+        "name": "Aphonopelma eutylenum",
+        "preferred_common_name": "California Ebony Tarantula",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200025/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200025/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200025/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/446430929/square.jpeg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/446430929/medium.jpeg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/446430929/square.jpeg"
         }
       }
     },
     {
-      "count": 208,
+      "count": 519,
       "taxon": {
-        "id": 1026,
-        "name": "Sequoia sempervirens",
-        "preferred_common_name": "Coast Redwood",
+        "id": 14011,
+        "name": "Vidua macroura",
+        "preferred_common_name": "Pin-tailed Whydah",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200026/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200026/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200026/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/129793503/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/129793503/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/129793503/square.jpg"
         }
       }
     },
     {
-      "count": 171,
+      "count": 518,
       "taxon": {
-        "id": 1027,
-        "name": "Quercus agrifolia",
-        "preferred_common_name": "Coast Live Oak",
+        "id": 130872,
+        "name": "Schinus terebinthifolia",
+        "preferred_common_name": "Brazilian pepper",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200027/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200027/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200027/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/57240422/square.jpg",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/57240422/medium.jpg",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/57240422/square.jpg"
         }
       }
     },
     {
-      "count": 149,
+      "count": 517,
       "taxon": {
-        "id": 1028,
-        "name": "Umbellularia californica",
-        "preferred_common_name": "California Bay Laurel",
+        "id": 348812,
+        "name": "Ganoderma brownii",
+        "preferred_common_name": "Artist's Conk",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200028/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200028/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200028/thumb.jpg"
+          "square_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/3025533/square.JPG",
+          "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/3025533/medium.JPG",
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/3025533/square.JPG"
         }
       }
     },
     {
-      "count": 127,
+      "count": 491,
       "taxon": {
-        "id": 1029,
-        "name": "Toxicodendron diversilobum",
-        "preferred_common_name": "Pacific Poison Oak",
+        "id": 130215,
+        "name": "Carissa macrocarpa",
+        "preferred_common_name": "Natal Plum",
         "default_photo": {
-          "square_url": "https://static.inaturalist.org/photos/200029/square.jpg",
-          "medium_url": "https://static.inaturalist.org/photos/200029/medium.jpg",
-          "url": "https://static.inaturalist.org/photos/200029/thumb.jpg"
+          "square_url": "https://static.inaturalist.org/photos/2722663/square.JPG",
+          "medium_url": "https://static.inaturalist.org/photos/2722663/medium.JPG",
+          "url": "https://static.inaturalist.org/photos/2722663/square.JPG"
         }
       }
     }
