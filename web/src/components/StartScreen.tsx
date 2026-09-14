@@ -1,28 +1,27 @@
 import { useRef, useState } from "react";
 import { PlacePicker } from "./PlacePicker.js";
-import { MONTHS } from "../months.js";
 import type { Place } from "../types.js";
 
 export interface QuestInput {
   login: string;
   place: Place;
-  month: number;
 }
 
 interface Props {
   initialLogin?: string;
   initialPlace?: Place | null;
-  initialMonth?: number;
+  busy?: boolean;
+  error?: string | null;
   onSubmit: (input: QuestInput) => void;
+  onCancel?: () => void;
 }
 
 const LOGIN_RE = /^[A-Za-z0-9._-]{1,50}$/;
 
-export function StartScreen({ initialLogin, initialPlace, initialMonth, onSubmit }: Props) {
+export function StartScreen({ initialLogin, initialPlace, busy, error, onSubmit, onCancel }: Props) {
   const [login, setLogin] = useState(initialLogin ?? "");
   const [place, setPlace] = useState<Place | null>(initialPlace ?? null);
-  const [month, setMonth] = useState<number | "">(initialMonth ?? "");
-  const [errors, setErrors] = useState<{ login?: string; place?: string; month?: string }>({});
+  const [errors, setErrors] = useState<{ login?: string; place?: string }>({});
   const loginRef = useRef<HTMLInputElement>(null);
 
   function submit(e: React.FormEvent) {
@@ -30,20 +29,24 @@ export function StartScreen({ initialLogin, initialPlace, initialMonth, onSubmit
     const next: typeof errors = {};
     if (!LOGIN_RE.test(login.trim())) next.login = "Enter a valid iNaturalist username.";
     if (!place) next.place = "Pick a place.";
-    if (month === "") next.month = "Pick a month.";
     setErrors(next);
     if (Object.keys(next).length > 0) {
       if (next.login) loginRef.current?.focus();
       return;
     }
-    onSubmit({ login: login.trim(), place: place as Place, month: month as number });
+    onSubmit({ login: login.trim(), place: place as Place });
   }
 
   return (
     <main className="screen start" aria-labelledby="start-heading">
       <div className="start-inner">
+        {onCancel && (
+          <button type="button" className="btn-back" onClick={onCancel}>
+            Back
+          </button>
+        )}
         <h1 id="start-heading">Map what you've never seen</h1>
-        <p className="subline">Paste your iNaturalist name, pick a place and a month, and see what to hunt for.</p>
+        <p className="subline">Paste your iNaturalist name and pick a place. See what to hunt for this month.</p>
 
         <form className="quest-form" onSubmit={submit} noValidate>
           <div className="field-group">
@@ -85,32 +88,14 @@ export function StartScreen({ initialLogin, initialPlace, initialMonth, onSubmit
             )}
           </div>
 
-          <div className="field-group">
-            <label htmlFor="month-input">Month</label>
-            <select
-              id="month-input"
-              className={errors.month ? "field invalid" : "field"}
-              value={month}
-              aria-describedby={errors.month ? "month-error" : undefined}
-              aria-invalid={errors.month ? true : undefined}
-              onChange={(e) => setMonth(e.target.value === "" ? "" : Number(e.target.value))}
-            >
-              <option value="">Pick a month</option>
-              {MONTHS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            {errors.month && (
-              <p className="field-error" id="month-error" role="alert">
-                {errors.month}
-              </p>
-            )}
-          </div>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
 
-          <button type="submit" className="btn-primary">
-            Build my quest
+          <button type="submit" className="btn-primary" disabled={busy}>
+            {busy ? "Starting your quest" : "Start quest"}
           </button>
         </form>
       </div>

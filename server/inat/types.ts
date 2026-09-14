@@ -37,6 +37,21 @@ export interface Place {
   displayName: string;
 }
 
+// A geographic bounding box for framing a map. Longitudes/latitudes in
+// decimal degrees; sw is the south-west corner, ne the north-east.
+export interface BBox {
+  swLat: number;
+  swLng: number;
+  neLat: number;
+  neLng: number;
+}
+
+export interface PlaceDetails {
+  id: number;
+  name: string;
+  bbox: BBox | null;
+}
+
 // A ranked target as returned to the client.
 export interface Target {
   taxonId: number;

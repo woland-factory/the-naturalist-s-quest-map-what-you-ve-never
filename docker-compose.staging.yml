@@ -12,6 +12,8 @@ services:
       INAT_API_BASE: ${INAT_API_BASE:-https://api.inaturalist.org/v1}
       INAT_RATE_LIMIT_RPS: ${INAT_RATE_LIMIT_RPS:-1}
       INAT_USER_AGENT: ${INAT_USER_AGENT:-naturalist-quest-map (staging)}
+      # Saved quests persist here across restarts, on a named volume.
+      DATA_DIR: /app/data
       # Staging shows the differentiator on first load with no hand input.
       SEED_DEMO: "1"
       SEED_DEMO_LOGIN: ${SEED_DEMO_LOGIN:-kueda}
@@ -27,11 +29,15 @@ services:
     mem_limit: 512m
     oom_score_adj: 800
     restart: unless-stopped
+    volumes:
+      - web-data:/app/data
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+volumes:
+  web-data:
 networks:
   staging:
     external: true

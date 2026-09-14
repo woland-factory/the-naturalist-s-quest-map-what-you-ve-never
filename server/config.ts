@@ -36,6 +36,9 @@ export interface AppConfig {
   rateLimitMax: number;
   rateLimitWindow: string;
   targetsRateLimitMax: number;
+  dataDir: string;
+  maxQuestsPerUser: number;
+  questsRateLimitMax: number;
   sentryDsn: string;
   umamiWebsiteId: string;
   umamiUrl: string;
@@ -64,6 +67,9 @@ export function loadConfig(): AppConfig {
     rateLimitMax: num("RATE_LIMIT_MAX", 60),
     rateLimitWindow: str("RATE_LIMIT_WINDOW", "1 minute"),
     targetsRateLimitMax: num("TARGETS_RATE_LIMIT_MAX", 20),
+    dataDir: str("DATA_DIR", "./data"),
+    maxQuestsPerUser: num("MAX_QUESTS_PER_USER", 25),
+    questsRateLimitMax: num("QUESTS_RATE_LIMIT_MAX", 15),
     sentryDsn: str("SENTRY_DSN", ""),
     umamiWebsiteId: str("UMAMI_WEBSITE_ID", ""),
     umamiUrl: str("UMAMI_URL", ""),

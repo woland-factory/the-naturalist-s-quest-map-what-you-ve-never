@@ -88,3 +88,7 @@ export function userKey(login: string): string {
 export function placeKey(q: string): string {
   return `place:v1:${q.trim().toLowerCase()}`;
 }
+
+export function placeDetailKey(placeId: number): string {
+  return `placedetail:v1:${placeId}`;
+}

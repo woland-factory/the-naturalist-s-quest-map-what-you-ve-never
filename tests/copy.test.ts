@@ -28,9 +28,11 @@ function stripComments(src: string): string {
 const FILES = [
   ...walk(join(ROOT, "web", "src")),
   join(ROOT, "server", "app.ts"),
-  join(ROOT, "server", "routes", "targets.ts"),
+  join(ROOT, "server", "routes", "quests.ts"),
   join(ROOT, "server", "routes", "users.ts"),
   join(ROOT, "server", "routes", "places.ts"),
+  join(ROOT, "server", "targets.ts"),
+  join(ROOT, "server", "seed.ts"),
 ];
 
 const BANNED_VOCAB = [

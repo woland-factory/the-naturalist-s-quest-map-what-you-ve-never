@@ -19,6 +19,22 @@ export interface BuiltTargets {
 
 export const RANK_BASIS = "frequency+observers";
 
+// The one-line, honest statement of what the ranking means. Kept verbatim
+// from the spec; swept for banned copy. Lives here (not in a route) so the
+// quest route imports it after the old targets route is removed.
+export const RANKING_NOTE =
+  "Ranked by how often people record each species here this month, and by how many different people find it. It's a guide, not a guarantee.";
+
+/**
+ * The live season is always "now". A quest stores no month; its ranking
+ * month is resolved every time it is created, opened, or listed-for-build,
+ * so a quest re-ranks by itself as the calendar turns. Resolved in UTC so
+ * the result is deterministic regardless of server timezone.
+ */
+export function resolveSeasonMonth(now: () => number = Date.now): number {
+  return new Date(now()).getUTCMonth() + 1;
+}
+
 export interface TargetsDeps {
   client: INatClient;
   cache: Cache;

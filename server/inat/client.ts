@@ -1,7 +1,7 @@
 import type { Cache } from "../cache.js";
-import { observersKey, placeKey, userKey } from "../cache.js";
+import { observersKey, placeDetailKey, placeKey, userKey } from "../cache.js";
 import { INatError } from "./types.js";
-import type { Place, SpeciesCount, SpeciesCountsResponse, UserProfile } from "./types.js";
+import type { BBox, Place, PlaceDetails, SpeciesCount, SpeciesCountsResponse, UserProfile } from "./types.js";
 
 // The ONE place iNaturalist is ever called. Every method acquires a token
 // from a single process-wide bucket before its fetch, so all iNat traffic
@@ -60,6 +60,37 @@ interface RawPlace {
   id: number;
   name: string;
   display_name?: string;
+  bounding_box_geojson?: unknown;
+}
+
+// iNaturalist returns the place bounding box as a GeoJSON geometry. We only
+// need its extent, so flatten every coordinate pair and take the min/max.
+// This handles Polygon and MultiPolygon without caring which it is.
+function parseBBox(geo: unknown): BBox | null {
+  if (!geo || typeof geo !== "object") return null;
+  const coords = (geo as { coordinates?: unknown }).coordinates;
+  const points: [number, number][] = [];
+  const collect = (node: unknown): void => {
+    if (!Array.isArray(node)) return;
+    if (typeof node[0] === "number" && typeof node[1] === "number") {
+      points.push([node[0], node[1]]);
+      return;
+    }
+    for (const child of node) collect(child);
+  };
+  collect(coords);
+  if (points.length === 0) return null;
+  let swLat = Infinity;
+  let swLng = Infinity;
+  let neLat = -Infinity;
+  let neLng = -Infinity;
+  for (const [lng, lat] of points) {
+    if (lat < swLat) swLat = lat;
+    if (lat > neLat) neLat = lat;
+    if (lng < swLng) swLng = lng;
+    if (lng > neLng) neLng = lng;
+  }
+  return { swLat, swLng, neLat, neLng };
 }
 
 export class INatClient {
@@ -165,6 +196,28 @@ export class INatClient {
     }));
     this.opts.cache.set(key, places, this.opts.placeTtlSeconds);
     return places;
+  }
+
+  /**
+   * Place details with a bounding box, used once at quest creation to frame
+   * the map. Cached under the place TTL so reopening a quest never re-fetches
+   * it and the map never fans out iNat calls.
+   */
+  async placeDetails(placeId: number): Promise<PlaceDetails> {
+    const key = placeDetailKey(placeId);
+    const cached = this.opts.cache.get<PlaceDetails>(key);
+    if (cached !== undefined) return cached;
+
+    const url = this.url(`/places/${placeId}`, {});
+    const data = await this.request<{ results?: RawPlace[] }>(url);
+    const first = (data.results ?? [])[0];
+    const details: PlaceDetails = {
+      id: placeId,
+      name: first?.display_name || first?.name || "",
+      bbox: parseBBox(first?.bounding_box_geojson),
+    };
+    this.opts.cache.set(key, details, this.opts.placeTtlSeconds);
+    return details;
   }
 
   /**

@@ -24,6 +24,33 @@ export interface Place {
   displayName: string;
 }
 
+export interface BBox {
+  swLat: number;
+  swLng: number;
+  neLat: number;
+  neLng: number;
+}
+
+// A saved quest as the list and quest screens see it.
+export interface QuestSummary {
+  id: string;
+  login: string;
+  placeId: number;
+  placeName: string;
+  placeBbox: BBox | null;
+  taxonRootId: number | null;
+  seasonMonth: number;
+  targetCount: number;
+  totalAvailable: number;
+  createdAt: number;
+  lastRefreshedAt: number;
+}
+
+// Create and reopen return the quest plus its first page of targets.
+export interface QuestResponse extends TargetsResponse {
+  quest: QuestSummary;
+}
+
 export interface DemoDescriptor {
   login: string;
   placeId: number;
@@ -32,6 +59,7 @@ export interface DemoDescriptor {
 }
 
 export interface AppConfig {
+  inatTileBase?: string;
   umamiWebsiteId?: string;
   umamiUrl?: string;
   sentryDsn?: string;

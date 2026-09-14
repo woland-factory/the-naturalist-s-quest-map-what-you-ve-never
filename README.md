@@ -1,10 +1,14 @@
 # Map what you've never seen
 
 A trip-planning tool for iNaturalist life-listers. Paste your public
-iNaturalist username, pick a place and a month, and get a ranked list of the
-species you have never recorded that other people find there at that time of
-year. It answers one question naturalists otherwise hand-build every trip:
+iNaturalist username, pick a place, and get a ranked list of the species you
+have never recorded that other people find there this month, mapped to where
+to go. It answers one question naturalists otherwise hand-build every trip:
 what could I realistically find here that would be new to me?
+
+Quests save themselves. Come back before your next trip and your quests are
+still there, re-ranked for the current month so the list stays fresh as the
+season turns. Your username is the only key, so there is no account to create.
 
 The ranking blends how often each species is recorded at that place and month
 with how many different people find it, so a species many observers see
@@ -16,9 +20,12 @@ not a guarantee.
 The app is one web service: a Fastify API that also serves a React frontend
 from the same origin. It reads only public iNaturalist data through a single
 adapter that rate-limits itself to about one request per second and caches
-results in memory, so repeat views never re-query iNaturalist. There is no
-database and no account system. Your username is the only input, and the app
-stores nothing about you between restarts.
+results in memory, so repeat views never re-query iNaturalist. Saved quests
+live in a small JSON file under `DATA_DIR` (a Docker volume in the compose
+files), so they survive a restart. There is no account system: your public
+username is the only key, and every quest holds only public data. The map
+draws iNaturalist taxon tiles, which iNaturalist already obscures for
+protected species, so obscured locations stay obscured.
 
 ## Run it
 
@@ -68,7 +75,11 @@ ones you are most likely to change:
 - `SENTRY_DSN`: error tracking. Unset means error tracking is off.
 - `UMAMI_WEBSITE_ID` and `UMAMI_URL`: privacy-friendly analytics. Unset means
   no analytics script loads.
-- `SEED_DEMO`: set to `1` to preload the example quest on boot.
+- `SEED_DEMO`: set to `1` to preload and persist the example quest on boot.
+- `DATA_DIR`: where saved quests are written. Defaults to `./data`; the compose
+  files mount a named volume here so quests persist across restarts.
+- `MAX_QUESTS_PER_USER` and `QUESTS_RATE_LIMIT_MAX`: caps that bound stored
+  quests per username and the rate of quest creation.
 
 No secret is ever committed. `.env` stays out of git; `.env.example` holds
 placeholders only.
@@ -87,9 +98,11 @@ on your machine.
 
 ## Where the code lives
 
-- `server/`: Fastify app, routes, the iNaturalist adapter (`inat/client.ts`),
-  the ranking core (`inat/ranking.ts`), and the in-memory cache.
-- `web/`: the React frontend (start screen, results screen, designed states).
+- `server/`: Fastify app, routes (`routes/quests.ts`), the iNaturalist adapter
+  (`inat/client.ts`), the ranking core (`inat/ranking.ts`), the in-memory
+  cache, and the file-backed quest store (`store/quests.ts`).
+- `web/`: the React frontend (start form, My quests, the quest map and ranked
+  list, designed states).
 - `tests/`: unit and integration tests. `e2e/`: Playwright specs and the
   test harness.
 

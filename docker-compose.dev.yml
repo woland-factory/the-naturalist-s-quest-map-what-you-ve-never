@@ -9,11 +9,16 @@ services:
     environment:
       PORT: "8080"
       INAT_USER_AGENT: "naturalist-quest-map (dev)"
+      DATA_DIR: /app/data
     volumes:
       - .:/app
       - /app/node_modules
+      # Keep persisted quests on a named volume, off the bind-mounted source.
+      - dev-data:/app/data
     ports:
       # Bind to loopback only; published ports bypass the host firewall.
       - "127.0.0.1:5173:5173"
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
+volumes:
+  dev-data:

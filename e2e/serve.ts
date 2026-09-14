@@ -39,6 +39,28 @@ const mock = createServer((req, res) => {
       ],
     });
   }
+  // Place details for map framing: a bounding box around California.
+  if (/\/places\/\d+$/.test(u.pathname)) {
+    return json(res, {
+      results: [
+        {
+          id: 14,
+          name: "California",
+          display_name: "California, US",
+          bounding_box_geojson: {
+            type: "Polygon",
+            coordinates: [[[-124.48, 32.53], [-114.13, 32.53], [-114.13, 42.01], [-124.48, 42.01], [-124.48, 32.53]]],
+          },
+        },
+      ],
+    });
+  }
+  // Taxon map tiles: 404 so the map's graceful fallback path is exercised
+  // end to end without ever touching the live iNaturalist tile servers.
+  if (u.pathname.includes("/grid/")) {
+    res.writeHead(404);
+    return res.end("not a tile");
+  }
   if (u.pathname.endsWith("/observations/species_counts")) {
     return json(res, { total_results: 4210, results: species });
   }
