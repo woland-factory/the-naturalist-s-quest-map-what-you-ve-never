@@ -5,7 +5,8 @@ import type { Cache } from "../cache.js";
 import type { INatClient } from "../inat/client.js";
 import { INatError, type BBox } from "../inat/types.js";
 import { buildTargets, paginate, resolveSeasonMonth, RANK_BASIS, RANKING_NOTE, type BuiltTargets } from "../targets.js";
-import type { QuestRecord, QuestStore } from "../store/quests.js";
+import { pollMelt } from "../melt.js";
+import type { MeltedTarget, QuestRecord, QuestStore } from "../store/quests.js";
 
 const LOGIN_PATTERN = "^[A-Za-z0-9._-]{1,50}$";
 const UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
@@ -24,6 +25,8 @@ export interface QuestSummary {
   totalAvailable: number;
   createdAt: number;
   lastRefreshedAt: number;
+  openCount: number; // live open count from the last build (= targetCount)
+  meltedCount: number; // how many targets have crossed themselves off
 }
 
 function toSummary(rec: QuestRecord): QuestSummary {
@@ -39,7 +42,17 @@ function toSummary(rec: QuestRecord): QuestSummary {
     totalAvailable: rec.lastTotalAvailable,
     createdAt: rec.createdAt,
     lastRefreshedAt: rec.lastRefreshedAt,
+    // On create/open lastTargetCount is set from the fresh build, so it is the
+    // live open count there too; on the list endpoint (no build) it is the
+    // last-known open count, which is exactly what the list should show.
+    openCount: rec.lastTargetCount,
+    meltedCount: rec.melted.length,
   };
+}
+
+// Melted targets, newest completion first, for the Found surface.
+function meltedForDisplay(melted: MeltedTarget[]): MeltedTarget[] {
+  return [...melted].sort((a, b) => b.meltedAt - a.meltedAt);
 }
 
 interface CreateBody {
@@ -66,7 +79,13 @@ export function registerQuests(app: FastifyInstance, deps: QuestDeps): void {
 
   // The paginated response shape shared by create and reopen, so the quest
   // screen renders with no extra round-trip.
-  function questPayload(rec: QuestRecord, built: BuiltTargets, page: number, perPage: number) {
+  function questPayload(
+    rec: QuestRecord,
+    built: BuiltTargets,
+    page: number,
+    perPage: number,
+    newlyMelted: MeltedTarget[] = [],
+  ) {
     return {
       quest: toSummary(rec),
       page,
@@ -76,6 +95,8 @@ export function registerQuests(app: FastifyInstance, deps: QuestDeps): void {
       rankBasis: RANK_BASIS,
       note: RANKING_NOTE,
       results: paginate(built, page, perPage),
+      melted: meltedForDisplay(rec.melted),
+      newlyMelted: newlyMelted.map((m) => m.taxonId),
     };
   }
 
@@ -145,6 +166,13 @@ export function registerQuests(app: FastifyInstance, deps: QuestDeps): void {
           lastSeasonMonth: month,
           lastTargetCount: built.totalTargets,
           lastTotalAvailable: built.totalAvailable,
+          // Snapshot the just-built unobserved target set. No melt poll on
+          // create: species already confirmed were excluded by
+          // unobserved_by_user_id, so the intersection is provably empty and a
+          // poll would be a wasted upstream call.
+          targetTaxonIds: built.targets.map((t) => t.taxonId),
+          melted: [],
+          lastMeltPolledAt: 0,
         });
 
         return reply.code(201).send(questPayload(rec, built, 1, config.pageSize));
@@ -203,6 +231,12 @@ export function registerQuests(app: FastifyInstance, deps: QuestDeps): void {
       const perPage = req.query.perPage ?? config.pageSize;
 
       try {
+        // Melt first, against the PREVIOUS target snapshot: a target the user
+        // just confirmed is still in that snapshot, so it is captured in
+        // `melted` before the snapshot is refreshed below. Best-effort: this
+        // never throws out and never fails the open.
+        const meltRes = await pollMelt({ client, cache, config, now, logger: app.log }, rec);
+
         const month = resolveSeasonMonth(now);
         const built = await buildTargets(
           { client, cache, config, now },
@@ -215,9 +249,14 @@ export function registerQuests(app: FastifyInstance, deps: QuestDeps): void {
             lastSeasonMonth: month,
             lastTargetCount: built.totalTargets,
             lastTotalAvailable: built.totalAvailable,
+            melted: meltRes.melted,
+            // Refresh the snapshot from the fresh build (which excludes the
+            // just-observed species); the melt above already ran on the old one.
+            targetTaxonIds: built.targets.map((t) => t.taxonId),
+            lastMeltPolledAt: now(),
           }) ?? rec;
 
-        return questPayload(updated, built, page, perPage);
+        return questPayload(updated, built, page, perPage, meltRes.newlyMelted);
       } catch (err) {
         if (err instanceof INatError) {
           return reply.code(502).send({ error: "upstream", message: "iNaturalist is slow right now. Try again in a moment." });

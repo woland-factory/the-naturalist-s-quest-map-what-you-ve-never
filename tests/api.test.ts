@@ -23,13 +23,14 @@ interface FetchOpts {
   users?: unknown[];
   places?: unknown[];
   species?: { total_results: number; results: unknown[] };
+  observations?: unknown[]; // research-grade observations for the melt poll
   observerCount?: number;
   observersThrow?: boolean;
   placeDetailThrow?: boolean;
 }
 
 function makeFetch(opts: FetchOpts = {}) {
-  const calls = { users: 0, places: 0, placeDetail: 0, species: 0, observers: 0, speciesMonths: [] as string[] };
+  const calls = { users: 0, places: 0, placeDetail: 0, species: 0, observers: 0, observations: 0, speciesMonths: [] as string[] };
   const fetchImpl = vi.fn(async (url: string) => {
     const u = new URL(url);
     if (u.pathname.endsWith("/users/autocomplete")) {
@@ -57,9 +58,27 @@ function makeFetch(opts: FetchOpts = {}) {
       if (opts.observersThrow) throw new TypeError("network down");
       return resp(200, { total_results: opts.observerCount ?? 5 });
     }
+    // The melt poll: /observations (not a sub-path). Must be checked after the
+    // species_counts/observers sub-paths above.
+    if (u.pathname.endsWith("/observations")) {
+      calls.observations++;
+      return resp(200, { results: opts.observations ?? [] });
+    }
     return resp(404, {});
   });
   return { fetchImpl: fetchImpl as unknown as typeof fetch, calls };
+}
+
+// A research-grade observation shaped like iNat's /observations payload.
+function obsFixture(taxonId: number, over: Record<string, unknown> = {}) {
+  return {
+    id: 900000 + taxonId,
+    uri: `https://www.inaturalist.org/observations/${900000 + taxonId}`,
+    observed_on: "2026-09-03",
+    taxon: { id: taxonId, name: `Taxon ${taxonId}`, preferred_common_name: `Common ${taxonId}` },
+    observation_photos: [{ photo: { medium_url: `https://x/${taxonId}/medium.jpg` } }],
+    ...over,
+  };
 }
 
 function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
@@ -348,6 +367,135 @@ describe("GET /api/quests/:id", () => {
     await app.inject({ method: "GET", url: `/api/quests/${id}?page=2` });
     await app.inject({ method: "GET", url: `/api/quests/${id}` });
     expect(calls.species).toBe(1);
+    await app.close();
+  });
+
+  it("melts a target open->melted from the user's confirmed observation, with provenance", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "quest-melt-"));
+    const file = join(dir, "quests.json");
+    try {
+      // Create with taxon 100 present in the open list, so it enters the snapshot.
+      const app1 = await buildTestApp({
+        fetchImpl: makeFetch({ species: speciesFixture(40, 5000), observerCount: 4 }).fetchImpl,
+        questStore: createFileQuestStore(file),
+        config: testConfig({ observerEnrichTopK: 3 }),
+      });
+      const created = await app1.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+      const id = created.json().quest.id;
+      expect(created.json().melted).toEqual([]);
+      await app1.close();
+
+      // Reopen against a fresh cache: species_counts no longer lists taxon 100
+      // (the user recorded it), and /observations returns a confirmed obs of it.
+      const excludes100 = {
+        total_results: 4999,
+        results: Array.from({ length: 39 }, (_, i) => ({
+          count: 900 - i,
+          taxon: { id: 101 + i, name: `Taxon ${101 + i}`, preferred_common_name: `Common ${101 + i}`, default_photo: { medium_url: `https://x/${i}.jpg` } },
+        })),
+      };
+      const { fetchImpl, calls } = makeFetch({ species: excludes100, observations: [obsFixture(100)], observerCount: 4 });
+      const app2 = await buildTestApp({ fetchImpl, questStore: createFileQuestStore(file), config: testConfig({ observerEnrichTopK: 3 }) });
+      const reopen = await app2.inject({ method: "GET", url: `/api/quests/${id}` });
+      expect(reopen.statusCode).toBe(200);
+      const body = reopen.json();
+      expect(body.melted).toHaveLength(1);
+      expect(body.melted[0]).toMatchObject({
+        taxonId: 100,
+        observationUrl: "https://www.inaturalist.org/observations/900100",
+        observedOn: "2026-09-03",
+        photoUrl: "https://x/100/medium.jpg",
+      });
+      expect(body.newlyMelted).toEqual([100]);
+      expect(body.quest.meltedCount).toBe(1);
+      // The open list no longer contains the melted taxon.
+      expect(body.results.some((t: { taxonId: number }) => t.taxonId === 100)).toBe(false);
+      // Exactly one upstream /observations call for this open.
+      expect(calls.observations).toBe(1);
+      await app2.close();
+
+      // The persisted record now holds the melted target.
+      const reload = createFileQuestStore(file).get(id);
+      expect(reload?.melted.map((m) => m.taxonId)).toEqual([100]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("is idempotent and never un-melts once the taxon leaves species_counts and the snapshot", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "quest-melt-idem-"));
+    const file = join(dir, "quests.json");
+    try {
+      const app1 = await buildTestApp({
+        fetchImpl: makeFetch({ species: speciesFixture(40, 5000), observerCount: 4 }).fetchImpl,
+        questStore: createFileQuestStore(file),
+        config: testConfig({ observerEnrichTopK: 3 }),
+      });
+      const created = await app1.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+      const id = created.json().quest.id;
+      await app1.close();
+
+      const excludes100 = {
+        total_results: 4999,
+        results: Array.from({ length: 39 }, (_, i) => ({ count: 900 - i, taxon: { id: 101 + i, name: `Taxon ${101 + i}` } })),
+      };
+      // First reopen melts 100 and refreshes the snapshot to exclude it.
+      const first = makeFetch({ species: excludes100, observations: [obsFixture(100)] });
+      const appA = await buildTestApp({ fetchImpl: first.fetchImpl, questStore: createFileQuestStore(file), config: testConfig({ observerEnrichTopK: 3 }) });
+      const r1 = await appA.inject({ method: "GET", url: `/api/quests/${id}` });
+      expect(r1.json().quest.meltedCount).toBe(1);
+      await appA.close();
+
+      // Second reopen, fresh cache: snapshot no longer has 100 and species_counts
+      // still excludes it, yet the obs still comes back. 100 stays melted, once.
+      const second = makeFetch({ species: excludes100, observations: [obsFixture(100)] });
+      const appB = await buildTestApp({ fetchImpl: second.fetchImpl, questStore: createFileQuestStore(file), config: testConfig({ observerEnrichTopK: 3 }) });
+      const r2 = await appB.inject({ method: "GET", url: `/api/quests/${id}` });
+      const body = r2.json();
+      expect(body.melted).toHaveLength(1);
+      expect(body.melted[0].taxonId).toBe(100);
+      expect(body.newlyMelted).toEqual([]); // not newly melted this time
+      expect(body.quest.meltedCount).toBe(1); // stable
+      await appB.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("coalesces rapid reopens to a single /observations call and never contacts a mailer", async () => {
+    const { fetchImpl, calls } = makeFetch({ species: speciesFixture(10, 900), observations: [], observerCount: 3 });
+    const app = await buildTestApp({ fetchImpl });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+    await app.inject({ method: "GET", url: `/api/quests/${id}` });
+    await app.inject({ method: "GET", url: `/api/quests/${id}` });
+    await app.inject({ method: "GET", url: `/api/quests/${id}` });
+    // The short-TTL melt cache coalesces the repeats to one upstream call.
+    expect(calls.observations).toBe(1);
+    // No mailer call is ever issued on the melt path.
+    const urls = (fetchImpl as unknown as { mock: { calls: unknown[][] } }).mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes("mailer") || u.endsWith("/send"))).toBe(false);
+    await app.close();
+  });
+
+  it("still opens when the melt poll fails upstream (best-effort)", async () => {
+    // species_counts works, but /observations throws: the open must still render.
+    const fetchImpl = vi.fn(async (url: string) => {
+      const u = new URL(url);
+      if (u.pathname.endsWith("/users/autocomplete")) return resp(200, { results: [{ id: 1, login: "kueda" }] });
+      if (/\/places\/\d+$/.test(u.pathname)) return resp(200, { results: [] });
+      if (u.pathname.endsWith("/observations/species_counts")) return resp(200, speciesFixture(5, 50));
+      if (u.pathname.endsWith("/observations/observers")) return resp(200, { total_results: 2 });
+      if (u.pathname.endsWith("/observations")) throw new TypeError("network down");
+      return resp(404, {});
+    });
+    const app = await buildTestApp({ fetchImpl: fetchImpl as unknown as typeof fetch });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+    const reopen = await app.inject({ method: "GET", url: `/api/quests/${id}` });
+    expect(reopen.statusCode).toBe(200);
+    expect(reopen.json().results.length).toBeGreaterThan(0);
+    expect(reopen.json().melted).toEqual([]);
     await app.close();
   });
 
