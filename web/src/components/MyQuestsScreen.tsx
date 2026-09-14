@@ -55,6 +55,7 @@ function QuestCard({
         <h2 className="quest-place">{quest.placeName}</h2>
         <p className="quest-meta">
           {monthLabel(quest.seasonMonth)} · {quest.targetCount} {quest.targetCount === 1 ? "target" : "targets"}
+          {quest.meltedCount > 0 ? ` · ${quest.meltedCount} found` : ""}
         </p>
       </div>
       {confirming ? (

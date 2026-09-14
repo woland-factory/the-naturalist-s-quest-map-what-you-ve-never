@@ -33,6 +33,7 @@ const FILES = [
   join(ROOT, "server", "routes", "places.ts"),
   join(ROOT, "server", "targets.ts"),
   join(ROOT, "server", "seed.ts"),
+  join(ROOT, "server", "melt.ts"),
 ];
 
 const BANNED_VOCAB = [

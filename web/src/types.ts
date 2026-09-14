@@ -8,6 +8,19 @@ export interface Target {
   rankScore: number;
 }
 
+// A target the user has already photographed and the community confirmed, so
+// it has crossed itself off the quest, shown with the photo that completed it.
+export interface MeltedTarget {
+  taxonId: number;
+  scientificName: string;
+  commonName: string;
+  photoUrl: string | null;
+  observationId: number;
+  observationUrl: string;
+  observedOn: string | null;
+  meltedAt: number;
+}
+
 export interface TargetsResponse {
   page: number;
   perPage: number;
@@ -44,11 +57,16 @@ export interface QuestSummary {
   totalAvailable: number;
   createdAt: number;
   lastRefreshedAt: number;
+  openCount: number;
+  meltedCount: number;
 }
 
-// Create and reopen return the quest plus its first page of targets.
+// Create and reopen return the quest plus its first page of targets, and the
+// full melted set with any taxa first melted on this open.
 export interface QuestResponse extends TargetsResponse {
   quest: QuestSummary;
+  melted: MeltedTarget[];
+  newlyMelted: number[];
 }
 
 export interface DemoDescriptor {

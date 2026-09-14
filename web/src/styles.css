@@ -321,6 +321,76 @@ label {
   color: var(--ink-soft);
 }
 
+/* ---------- Found (melted) ---------- */
+.quest-progress {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.found-section {
+  margin-bottom: 20px;
+}
+
+.found-heading {
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+}
+
+.found-card {
+  padding: 0;
+  border-color: var(--brand);
+}
+
+.found-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+.found-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.found-check {
+  flex: 0 0 auto;
+  width: 24px;
+  text-align: center;
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.just-found-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.found-link .signal {
+  color: var(--brand);
+}
+
+.all-found-line {
+  margin: 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+}
+
 /* ---------- Pagination ---------- */
 .pager {
   display: flex;

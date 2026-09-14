@@ -3,6 +3,7 @@ import { StartScreen, type QuestInput } from "./components/StartScreen.js";
 import { MyQuestsScreen } from "./components/MyQuestsScreen.js";
 import { QuestScreen, type QuestStatus } from "./components/QuestScreen.js";
 import { createQuest, deleteQuest, getQuest, listQuests, getConfig, ApiError } from "./api.js";
+import { resolveQuestStatus } from "./questStatus.js";
 import type { AppConfig, QuestResponse, QuestSummary } from "./types.js";
 
 type View = "loading" | "my-quests" | "start" | "quest";
@@ -89,7 +90,7 @@ export function App() {
         if (reqSeq.current !== seq) return;
         setQuestData(res);
         setQuestPage(res.page);
-        setQuestStatus(res.totalTargets === 0 ? "empty" : "loaded");
+        setQuestStatus(resolveQuestStatus(res));
       } catch (err) {
         if (reqSeq.current !== seq) return;
         if (err instanceof ApiError && err.kind === "not_found") {
@@ -121,7 +122,7 @@ export function App() {
       reqSeq.current++;
       setQuestData(res);
       setQuestPage(res.page);
-      setQuestStatus(res.totalTargets === 0 ? "empty" : "loaded");
+      setQuestStatus(resolveQuestStatus(res));
       setView("quest");
       void refreshQuests(input.login);
     } catch (err) {
