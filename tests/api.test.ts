@@ -87,6 +87,7 @@ async function buildTestApp(args: {
       userTtlSeconds: config.userTtlSeconds,
       placeTtlSeconds: config.placeTtlSeconds,
       targetsTtlSeconds: config.targetsTtlSeconds,
+      meltPollTtlSeconds: config.meltPollTtlSeconds,
       fetchImpl: args.fetchImpl,
     });
   const tracker = args.sentrySdk ? createErrorTracker(config, args.sentrySdk) : undefined;

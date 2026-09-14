@@ -22,6 +22,7 @@ function makeClient(fetchImpl: typeof fetch, rps = 0) {
     userTtlSeconds: 3600,
     placeTtlSeconds: 3600,
     targetsTtlSeconds: 3600,
+    meltPollTtlSeconds: 60,
     fetchImpl,
   });
   return { client, cache };
@@ -100,6 +101,81 @@ describe("INatClient error handling", () => {
     const fetchImpl = vi.fn(async () => resp(400, {}));
     const { client } = makeClient(fetchImpl as unknown as typeof fetch);
     await expect(client.placesAutocomplete("cal")).rejects.toBeInstanceOf(INatError);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("INatClient recentConfirmedObservations", () => {
+  const obs = {
+    results: [
+      {
+        id: 555,
+        uri: "https://www.inaturalist.org/observations/555",
+        observed_on: "2026-09-03",
+        taxon: { id: 57665, name: "Cotinis mutabilis", preferred_common_name: "Figeater Beetle" },
+        observation_photos: [{ photo: { square_url: "https://x/1/square.jpg", medium_url: "https://x/1/medium.jpg" } }],
+      },
+      { id: 556, observed_on: "2026-08-01", taxon: null }, // no taxon: skipped
+    ],
+  };
+
+  it("requests /observations with the confirmed-observation params and maps results", async () => {
+    const fetchImpl = vi.fn(async (url: string) => {
+      expect(url).toContain("/observations?");
+      expect(url).toContain("user_id=kueda");
+      expect(url).toContain("place_id=14");
+      expect(url).toContain("quality_grade=research");
+      expect(url).toContain("order_by=observed_on");
+      expect(url).toContain("order=desc");
+      expect(url).toContain("per_page=200");
+      return resp(200, obs);
+    });
+    const { client } = makeClient(fetchImpl as unknown as typeof fetch);
+    const out = await client.recentConfirmedObservations({ login: "kueda", placeId: 14, perPage: 200 });
+    expect(out).toHaveLength(1); // the taxon-less result is guarded out
+    expect(out[0]).toMatchObject({
+      taxonId: 57665,
+      commonName: "Figeater Beetle",
+      scientificName: "Cotinis mutabilis",
+      observationId: 555,
+      observationUrl: "https://www.inaturalist.org/observations/555",
+      observedOn: "2026-09-03",
+      photoUrl: "https://x/1/medium.jpg",
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes d1 only when sinceIso is set", async () => {
+    const fetchImpl = vi.fn(async (url: string) => {
+      expect(url).toContain("d1=2026-01-01");
+      return resp(200, { results: [] });
+    });
+    const { client } = makeClient(fetchImpl as unknown as typeof fetch);
+    await client.recentConfirmedObservations({ login: "kueda", placeId: 14, perPage: 200, sinceIso: "2026-01-01" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("acquires a rate-limiter token before the fetch, then serves a repeat within the TTL from cache", async () => {
+    const cache = createCache(100);
+    const rl = new RateLimiter(0);
+    const acquire = vi.spyOn(rl, "acquire");
+    const fetchImpl = vi.fn(async () => resp(200, obs));
+    const client = new INatClient({
+      apiBase: "https://api.test/v1",
+      userAgent: "test-agent",
+      timeoutMs: 1000,
+      rateLimiter: rl,
+      cache,
+      userTtlSeconds: 3600,
+      placeTtlSeconds: 3600,
+      targetsTtlSeconds: 3600,
+      meltPollTtlSeconds: 60,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await client.recentConfirmedObservations({ login: "kueda", placeId: 14, perPage: 200 });
+    expect(acquire).toHaveBeenCalled();
+    // A repeat within the TTL is a cache hit: no second upstream fetch.
+    await client.recentConfirmedObservations({ login: "kueda", placeId: 14, perPage: 200 });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

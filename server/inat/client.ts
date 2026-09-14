@@ -1,7 +1,18 @@
 import type { Cache } from "../cache.js";
-import { observersKey, placeDetailKey, placeKey, userKey } from "../cache.js";
+import { meltKey, observersKey, placeDetailKey, placeKey, userKey } from "../cache.js";
 import { INatError } from "./types.js";
-import type { BBox, Place, PlaceDetails, SpeciesCount, SpeciesCountsResponse, UserProfile } from "./types.js";
+import type {
+  BBox,
+  INatObservation,
+  INatObservationPhoto,
+  INatPhoto,
+  ObservedTaxon,
+  Place,
+  PlaceDetails,
+  SpeciesCount,
+  SpeciesCountsResponse,
+  UserProfile,
+} from "./types.js";
 
 // The ONE place iNaturalist is ever called. Every method acquires a token
 // from a single process-wide bucket before its fetch, so all iNat traffic
@@ -45,6 +56,7 @@ export interface INatClientOptions {
   userTtlSeconds: number;
   placeTtlSeconds: number;
   targetsTtlSeconds: number;
+  meltPollTtlSeconds: number;
   fetchImpl?: typeof fetch;
 }
 
@@ -264,4 +276,79 @@ export class INatClient {
     this.opts.cache.set(key, total, this.opts.targetsTtlSeconds);
     return total;
   }
+
+  /**
+   * The user's recent research-grade (confirmed) observations at a place, in
+   * newest-first order. This is the melt poll's one upstream call: a single
+   * bounded page, cached under a short TTL so rapid reopens coalesce and never
+   * re-hit iNaturalist. Goes through the same request()/rate-limiter path as
+   * every other call, so it stays within the polite request rate.
+   */
+  async recentConfirmedObservations(args: {
+    login: string;
+    placeId: number;
+    perPage: number;
+    sinceIso?: string;
+  }): Promise<ObservedTaxon[]> {
+    const key = meltKey(args.placeId, args.login);
+    const cached = this.opts.cache.get<ObservedTaxon[]>(key);
+    if (cached !== undefined) return cached;
+
+    const url = this.url("/observations", {
+      user_id: args.login,
+      place_id: args.placeId,
+      quality_grade: "research",
+      order_by: "observed_on",
+      order: "desc",
+      per_page: args.perPage,
+      d1: args.sinceIso,
+    });
+    const data = await this.request<{ results?: INatObservation[] }>(url);
+    const mapped: ObservedTaxon[] = [];
+    for (const r of data.results ?? []) {
+      if (!r || !r.taxon || typeof r.taxon.id !== "number") continue; // no taxon: cannot match a target
+      mapped.push({
+        taxonId: r.taxon.id,
+        scientificName: r.taxon.name,
+        commonName: r.taxon.preferred_common_name || r.taxon.name,
+        photoUrl: observationPhoto(r),
+        observationId: r.id,
+        observationUrl: r.uri || `https://www.inaturalist.org/observations/${r.id}`,
+        observedOn: r.observed_on || null,
+      });
+    }
+    this.opts.cache.set(key, mapped, this.opts.meltPollTtlSeconds);
+    return mapped;
+  }
+}
+
+// Prefer the user's own observation photo (that is what "Confirmed by your
+// photo" means), falling back to the taxon default, then null. Normalized to
+// a medium size so the Found card is a real image, not a tiny thumbnail.
+function observationPhoto(o: INatObservation): string | null {
+  const fromObsPhotos = firstPhoto(o.observation_photos);
+  if (fromObsPhotos) return fromObsPhotos;
+  const fromPhotos = pickPhotoUrl(o.photos?.[0]);
+  if (fromPhotos) return fromPhotos;
+  return pickPhotoUrl(o.taxon?.default_photo ?? undefined);
+}
+
+function firstPhoto(photos: INatObservationPhoto[] | undefined): string | null {
+  for (const entry of photos ?? []) {
+    const url = pickPhotoUrl(entry.photo) ?? normalizeSize(entry.url);
+    if (url) return url;
+  }
+  return null;
+}
+
+function pickPhotoUrl(p: INatPhoto | null | undefined): string | null {
+  if (!p) return null;
+  return p.medium_url || p.square_url || normalizeSize(p.url) || null;
+}
+
+function normalizeSize(url: string | undefined): string | null {
+  if (!url) return null;
+  // iNat photo urls carry the size in the filename (square/small/medium/large).
+  // Bump a thumbnail up to medium so the Found card shows a real photo.
+  return url.replace(/\/(square|small|thumb)\./, "/medium.");
 }

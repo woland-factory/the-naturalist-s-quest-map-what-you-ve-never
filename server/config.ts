@@ -30,6 +30,8 @@ export interface AppConfig {
   targetsTtlSeconds: number;
   maxTargets: number;
   pageSize: number;
+  meltPollPerPage: number;
+  meltPollTtlSeconds: number;
   observerEnrichTopK: number;
   requestEnrichBudgetMs: number;
   cacheMaxEntries: number;
@@ -61,6 +63,8 @@ export function loadConfig(): AppConfig {
     targetsTtlSeconds: num("TARGETS_TTL_SECONDS", 86400),
     maxTargets: num("MAX_TARGETS", 500),
     pageSize: num("PAGE_SIZE", 20),
+    meltPollPerPage: num("MELT_POLL_PER_PAGE", 200),
+    meltPollTtlSeconds: num("MELT_POLL_TTL_SECONDS", 60),
     observerEnrichTopK: num("OBSERVER_ENRICH_TOP_K", 25),
     requestEnrichBudgetMs: num("REQUEST_ENRICH_BUDGET_MS", 30000),
     cacheMaxEntries: num("CACHE_MAX_ENTRIES", 500),

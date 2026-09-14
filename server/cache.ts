@@ -92,3 +92,9 @@ export function placeKey(q: string): string {
 export function placeDetailKey(placeId: number): string {
   return `placedetail:v1:${placeId}`;
 }
+
+// The melt poll's short-TTL coalescing key: the user's recent confirmed
+// observations at a place. Not the 24h targets TTL; it must stay fresh.
+export function meltKey(placeId: number, login: string): string {
+  return `melt:v1:${placeId}:${login.toLowerCase()}`;
+}

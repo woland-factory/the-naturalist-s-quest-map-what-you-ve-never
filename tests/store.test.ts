@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createFileQuestStore, createMemoryQuestStore, type QuestRecord } from "../server/store/quests.js";
@@ -20,6 +20,9 @@ function record(overrides: Partial<QuestRecord> = {}): QuestRecord {
     lastSeasonMonth: 9,
     lastTargetCount: 30,
     lastTotalAvailable: 4210,
+    targetTaxonIds: [],
+    melted: [],
+    lastMeltPolledAt: 0,
     ...overrides,
   };
 }
@@ -92,5 +95,67 @@ describe("createFileQuestStore", () => {
   it("starts empty when the file is missing", () => {
     const store = createFileQuestStore(file);
     expect(store.listByLogin("kueda")).toEqual([]);
+  });
+
+  it("migrates a v1 file forward: backfills the melt fields and rewrites as version 2", () => {
+    // A v1-shaped file: records without targetTaxonIds/melted/lastMeltPolledAt.
+    const v1Record = {
+      id: "a1111111-1111-4111-8111-111111111111",
+      loginLower: "kueda",
+      loginDisplay: "Kueda",
+      inatUserId: 1,
+      placeId: 14,
+      placeName: "California",
+      placeBbox: null,
+      taxonRootId: null,
+      createdAt: 100,
+      lastRefreshedAt: 100,
+      lastSeasonMonth: 9,
+      lastTargetCount: 30,
+      lastTotalAvailable: 4210,
+    };
+    writeFileSync(file, JSON.stringify({ version: 1, quests: [v1Record] }), "utf8");
+
+    const store = createFileQuestStore(file);
+    const loaded = store.get("a1111111-1111-4111-8111-111111111111");
+    expect(loaded).toBeDefined();
+    expect(loaded?.targetTaxonIds).toEqual([]);
+    expect(loaded?.melted).toEqual([]);
+    expect(loaded?.lastMeltPolledAt).toBe(0);
+    // Existing v1 data is preserved, not dropped.
+    expect(loaded?.placeName).toBe("California");
+    expect(loaded?.lastTargetCount).toBe(30);
+
+    // The next persist rewrites the file as version 2.
+    store.update("a1111111-1111-4111-8111-111111111111", { lastTargetCount: 31 });
+    const onDisk = JSON.parse(readFileSync(file, "utf8"));
+    expect(onDisk.version).toBe(2);
+    expect(onDisk.quests[0].melted).toEqual([]);
+    expect(onDisk.quests[0].lastTargetCount).toBe(31);
+  });
+
+  it("reads a v2 file as-is, keeping persisted melted targets", () => {
+    const melted = [
+      {
+        taxonId: 57665,
+        scientificName: "Cotinis mutabilis",
+        commonName: "Figeater Beetle",
+        photoUrl: "https://example.test/photo.jpg",
+        observationId: 123,
+        observationUrl: "https://www.inaturalist.org/observations/123",
+        observedOn: "2026-09-03",
+        meltedAt: 1_700_000_000_000,
+      },
+    ];
+    writeFileSync(
+      file,
+      JSON.stringify({ version: 2, quests: [record({ id: "b1111111-1111-4111-8111-111111111111", melted, targetTaxonIds: [57665] })] }),
+      "utf8",
+    );
+    const store = createFileQuestStore(file);
+    const loaded = store.get("b1111111-1111-4111-8111-111111111111");
+    expect(loaded?.melted).toHaveLength(1);
+    expect(loaded?.melted[0].taxonId).toBe(57665);
+    expect(loaded?.targetTaxonIds).toEqual([57665]);
   });
 });

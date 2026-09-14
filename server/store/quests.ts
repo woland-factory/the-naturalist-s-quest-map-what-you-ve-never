@@ -9,6 +9,20 @@ import type { BBox } from "../inat/types.js";
 // (capped per user), so a full rewrite per mutation is correct and simple,
 // and every read stays an in-memory indexed lookup with no hot-path query.
 
+// One target the user has already photographed and the community confirmed,
+// so it has crossed itself off the quest. Persisted with provenance so the
+// completion survives restarts and is shown in the product's own voice.
+export interface MeltedTarget {
+  taxonId: number; // intersection key; also idempotency key
+  scientificName: string;
+  commonName: string; // preferred_common_name || scientificName
+  photoUrl: string | null; // the user's own observation photo when present, else null
+  observationId: number; // iNat observation id
+  observationUrl: string; // https://www.inaturalist.org/observations/<id>
+  observedOn: string | null; // ISO date (YYYY-MM-DD) the obs was made; may be null
+  meltedAt: number; // Date.now() when first recorded as melted (server time)
+}
+
 export interface QuestRecord {
   id: string; // crypto.randomUUID()
   loginLower: string; // normalization/index key
@@ -23,6 +37,11 @@ export interface QuestRecord {
   lastSeasonMonth: number; // month used at last build (1..12)
   lastTargetCount: number; // capped count from last build, for the list
   lastTotalAvailable: number; // iNat total_results, for "N of many"
+  targetTaxonIds: number[]; // snapshot of open-target taxon ids from the most
+  // recent successful build; the "is this a target of this quest?" set the
+  // melt poll intersects.
+  melted: MeltedTarget[]; // persisted melted targets; append-only by taxonId.
+  lastMeltPolledAt: number; // Date.now() of the last melt poll (0 if never).
 }
 
 export interface QuestStore {
@@ -34,9 +53,23 @@ export interface QuestStore {
   update(id: string, patch: Partial<QuestRecord>): QuestRecord | undefined;
 }
 
+const CURRENT_VERSION = 2;
+
 interface FileShape {
   version: number;
   quests: QuestRecord[];
+}
+
+// Default the melt fields on a record that predates them (a v1 file). A v1
+// quest self-heals: it melts nothing until its first successful build
+// re-populates targetTaxonIds, and no existing data is lost.
+function backfillMelt(rec: QuestRecord): QuestRecord {
+  return {
+    ...rec,
+    targetTaxonIds: Array.isArray(rec.targetTaxonIds) ? rec.targetTaxonIds : [],
+    melted: Array.isArray(rec.melted) ? rec.melted : [],
+    lastMeltPolledAt: typeof rec.lastMeltPolledAt === "number" ? rec.lastMeltPolledAt : 0,
+  };
 }
 
 // Forward-only loader: branch on version from day one so later schema
@@ -50,12 +83,19 @@ function loadQuests(raw: string): QuestRecord[] {
   }
   if (!parsed || typeof parsed !== "object") return [];
   const shape = parsed as Partial<FileShape>;
+  const quests = Array.isArray(shape.quests) ? shape.quests : [];
+  if (shape.version === 2) {
+    // Already the current shape; read as-is (fields are present).
+    return quests;
+  }
   if (shape.version === 1) {
-    return Array.isArray(shape.quests) ? shape.quests : [];
+    // v1 records lack the melt fields. Backfill them; the next persist
+    // rewrites the file as version 2.
+    return quests.map(backfillMelt);
   }
   // Unknown/absent version: start empty rather than trust an unrecognized
   // layout. A real future migration adds its own version branch above.
-  return Array.isArray(shape.quests) ? shape.quests : [];
+  return quests.map(backfillMelt);
 }
 
 // The in-memory engine shared by both implementations. `persist` is called
@@ -128,7 +168,7 @@ export function createFileQuestStore(filePath: string): QuestStore {
   const seed = existsSync(filePath) ? loadQuests(readFileSync(filePath, "utf8")) : [];
 
   function persist(all: QuestRecord[]): void {
-    const data: FileShape = { version: 1, quests: all };
+    const data: FileShape = { version: CURRENT_VERSION, quests: all };
     const tmp = `${filePath}.tmp`;
     // Write to a temp file in the same directory, then rename: on the same
     // filesystem rename is atomic, so a reader never sees a half-written file.

@@ -52,6 +52,35 @@ export interface PlaceDetails {
   bbox: BBox | null;
 }
 
+// A photo attached to a single observation. iNat returns nested photo objects
+// on observation_photos[].photo and sometimes directly on photos[].
+export interface INatObservationPhoto {
+  url?: string;
+  photo?: INatPhoto;
+}
+
+// Raw observation shape, narrowed to only the fields the melt poll reads.
+export interface INatObservation {
+  id: number;
+  uri?: string;
+  observed_on?: string | null;
+  taxon?: INatTaxon | null;
+  observation_photos?: INatObservationPhoto[];
+  photos?: INatPhoto[];
+}
+
+// A confirmed observation mapped to what the melt poll needs: the taxon it
+// matches against the quest's target set, plus provenance for the Found card.
+export interface ObservedTaxon {
+  taxonId: number;
+  scientificName: string;
+  commonName: string; // taxon.preferred_common_name || taxon.name
+  photoUrl: string | null; // the user's observation photo, else taxon default, else null
+  observationId: number;
+  observationUrl: string;
+  observedOn: string | null; // YYYY-MM-DD or null
+}
+
 // A ranked target as returned to the client.
 export interface Target {
   taxonId: number;
