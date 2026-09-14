@@ -67,6 +67,22 @@ const mock = createServer((req, res) => {
   if (u.pathname.endsWith("/observations/observers")) {
     return json(res, { total_results: 30 + Math.floor(Math.random() * 40) });
   }
+  // The melt poll: one research-grade observation of a demo target. It matches
+  // an already-baked melted taxon, so the poll runs end to end and the demo's
+  // Found set stays coherent (no taxon shown as both open and found).
+  if (u.pathname.endsWith("/observations")) {
+    return json(res, {
+      results: [
+        {
+          id: 392852733,
+          uri: "https://www.inaturalist.org/observations/392852733",
+          observed_on: "2026-08-17",
+          taxon: { id: 4981, name: "Nycticorax nycticorax", preferred_common_name: "Black-crowned Night Heron" },
+          observation_photos: [{ photo: { medium_url: null } }],
+        },
+      ],
+    });
+  }
   res.writeHead(404);
   res.end("{}");
 });

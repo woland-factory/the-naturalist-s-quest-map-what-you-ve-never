@@ -23,7 +23,7 @@ test("the demo quest is saved and shows on My quests", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Open" }).first()).toBeVisible();
 });
 
-test("opening the demo quest shows the map and a populated, ranked list", async ({ page }) => {
+test("opening the demo quest shows the map, a ranked list, and a self-checked-off Found target", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open" }).first().click();
 
@@ -33,6 +33,15 @@ test("opening the demo quest shows the map and a populated, ranked list", async 
   const cards = page.locator(".target-card:not(.skeleton)");
   await expect(cards.first()).toBeVisible();
   expect(await cards.count()).toBeGreaterThan(0);
+
+  // The signature moment: a target has crossed itself off from the user's own
+  // photo, with provenance, and progress reads on the header. Shown on the
+  // seeded demo within the first view, no user input.
+  await expect(page.getByRole("heading", { name: "Found" })).toBeVisible();
+  await expect(page.getByText(/Confirmed by your photo on /).first()).toBeVisible();
+  const foundLink = page.locator(".found-link").first();
+  await expect(foundLink).toHaveAttribute("href", /inaturalist\.org\/observations\/\d+/);
+  await expect(page.getByText(/\d+ found · \d+ to go/)).toBeVisible();
 });
 
 test("failed map tiles show the fallback and the list stays usable", async ({ page }) => {
@@ -44,7 +53,7 @@ test("failed map tiles show the fallback and the list stays usable", async ({ pa
   // Selecting another species still works with the list.
   const secondRow = page.locator(".target-card.selectable").nth(1);
   await secondRow.click();
-  await expect(page.getByRole("heading", { level: 2 })).toContainText("Where to find");
+  await expect(page.getByRole("heading", { name: /Where to find/ })).toBeVisible();
 });
 
 test("a stored username with no quests lands on Start", async ({ page }) => {
