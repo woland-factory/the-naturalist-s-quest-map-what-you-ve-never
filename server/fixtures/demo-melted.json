@@ -1,0 +1,22 @@
+[
+  {
+    "taxonId": 4981,
+    "scientificName": "Nycticorax nycticorax",
+    "commonName": "Black-crowned Night Heron",
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/720002534/medium.jpg",
+    "observationId": 392852733,
+    "observationUrl": "https://www.inaturalist.org/observations/392852733",
+    "observedOn": "2026-08-17",
+    "meltedAt": 0
+  },
+  {
+    "taxonId": 76907,
+    "scientificName": "Erigeron canadensis",
+    "commonName": "horseweed",
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/732345507/medium.jpg",
+    "observationId": 399177636,
+    "observationUrl": "https://www.inaturalist.org/observations/399177636",
+    "observedOn": "2026-09-10",
+    "meltedAt": 0
+  }
+]

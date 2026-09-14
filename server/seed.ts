@@ -6,7 +6,7 @@ import type { Cache } from "./cache.js";
 import { targetsKey, userKey } from "./cache.js";
 import { blendTargets } from "./inat/ranking.js";
 import { resolveSeasonMonth, type BuiltTargets } from "./targets.js";
-import type { QuestStore } from "./store/quests.js";
+import type { MeltedTarget, QuestStore } from "./store/quests.js";
 import type { BBox, SpeciesCountsResponse, UserProfile } from "./inat/types.js";
 
 // SEED_DEMO pre-warms the cache for one known-good demo quest from bundled
@@ -19,12 +19,16 @@ import type { BBox, SpeciesCountsResponse, UserProfile } from "./inat/types.js";
 // of PUBLIC iNaturalist data (species_counts and observers payloads for a
 // California quest). They hold only public species names, counts, photo
 // URLs, and a public username. No private data, no secret, no PII.
+// demo-melted.json holds real PUBLIC research-grade observations by the demo
+// user at this place (public observation ids, urls, photos and dates), so the
+// staging demo shows a target that has already checked itself off, baked from
+// a fixture rather than a live poll.
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 // A stable, UUID-shaped id so re-seeding upserts the same demo quest and can
 // never create a duplicate. It also passes the quest route's UUID validation.
-const DEMO_QUEST_ID = "00000000-0000-4000-8000-000000000001";
+export const DEMO_QUEST_ID = "00000000-0000-4000-8000-000000000001";
 
 // California's extent, so the demo map frames the right region without a live
 // place lookup on boot.
@@ -76,6 +80,16 @@ export function seedDemo(cache: Cache, config: AppConfig, store: QuestStore): vo
   // now loaded from the volume) leave it in place so restarts never duplicate.
   if (!store.get(DEMO_QUEST_ID)) {
     const ts = Date.now();
+    // Bake the melted targets from the fixture with one stable meltedAt (the
+    // record ts), so re-seeds are deterministic and the signature moment shows
+    // on staging within a minute even if iNaturalist is slow or down.
+    const meltedFixture = readFixture<MeltedTarget[]>("demo-melted.json");
+    const melted: MeltedTarget[] = meltedFixture.map((m) => ({ ...m, meltedAt: ts }));
+    // The snapshot the melt poll would intersect: the open taxa plus the
+    // already-melted taxa, so counts stay coherent (a melted taxon is not in
+    // the open species-counts fixture, so open and found never overlap).
+    const openTaxonIds = built.targets.map((t) => t.taxonId);
+    const targetTaxonIds = [...openTaxonIds, ...melted.map((m) => m.taxonId)];
     store.create({
       id: DEMO_QUEST_ID,
       loginLower: config.seedDemoLogin.toLowerCase(),
@@ -90,6 +104,9 @@ export function seedDemo(cache: Cache, config: AppConfig, store: QuestStore): vo
       lastSeasonMonth: month,
       lastTargetCount: built.totalTargets,
       lastTotalAvailable: built.totalAvailable,
+      targetTaxonIds,
+      melted,
+      lastMeltPolledAt: ts,
     });
   }
 }

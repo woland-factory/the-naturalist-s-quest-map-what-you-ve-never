@@ -10,6 +10,10 @@ Quests save themselves. Come back before your next trip and your quests are
 still there, re-ranked for the current month so the list stays fresh as the
 season turns. Your username is the only key, so there is no account to create.
 
+A quest also checks off its own targets. When you photograph a target and the
+community confirms it, the next time you open the quest that species moves to a
+Found list showing your photo and the date, so you never prune the list by hand.
+
 The ranking blends how often each species is recorded at that place and month
 with how many different people find it, so a species many observers see
 outranks one a single power user photographed a hundred times. It is a guide,
@@ -80,6 +84,10 @@ ones you are most likely to change:
   files mount a named volume here so quests persist across restarts.
 - `MAX_QUESTS_PER_USER` and `QUESTS_RATE_LIMIT_MAX`: caps that bound stored
   quests per username and the rate of quest creation.
+- `MELT_POLL_PER_PAGE`: how many recent confirmed observations the check-off
+  poll reads per quest open. One bounded page, capped at 200 by iNaturalist.
+- `MELT_POLL_TTL_SECONDS`: how long that poll is cached, so rapid reopens do
+  not re-query iNaturalist. Defaults to 60.
 
 No secret is ever committed. `.env` stays out of git; `.env.example` holds
 placeholders only.

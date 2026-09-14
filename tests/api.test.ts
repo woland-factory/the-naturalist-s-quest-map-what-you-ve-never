@@ -515,6 +515,29 @@ describe("GET /api/quests/:id", () => {
   });
 });
 
+describe("SEED_DEMO melt", () => {
+  const DEMO_ID = "00000000-0000-4000-8000-000000000001";
+
+  it("opening the seeded demo quest returns an already-melted target with provenance", async () => {
+    // /observations returns nothing here: the demo's melted set is baked from a
+    // fixture, so the Found target must show without any live poll.
+    const app = await buildTestApp({
+      fetchImpl: makeFetch({ observations: [] }).fetchImpl,
+      config: testConfig({ seedDemo: true, seedDemoLogin: "kueda", seedDemoPlaceId: 14, seedDemoPlaceName: "California" }),
+    });
+    const res = await app.inject({ method: "GET", url: `/api/quests/${DEMO_ID}` });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.melted.length).toBeGreaterThanOrEqual(1);
+    expect(body.quest.meltedCount).toBeGreaterThanOrEqual(1);
+    const first = body.melted[0];
+    expect(first.observationUrl).toMatch(/inaturalist\.org\/observations\/\d+/);
+    expect(first.observedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(typeof first.photoUrl).toBe("string");
+    await app.close();
+  });
+});
+
 describe("GET /api/quests (list)", () => {
   it("returns an empty list for an unknown username, not an error", async () => {
     const app = await buildTestApp({ fetchImpl: makeFetch().fetchImpl });
