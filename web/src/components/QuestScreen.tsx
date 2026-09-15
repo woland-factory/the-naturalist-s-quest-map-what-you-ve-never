@@ -15,6 +15,10 @@ interface Props {
   placeName: string;
   seasonMonth: number;
   page: number;
+  seasonality: Map<number, number[] | null>;
+  seasonalityLoading: boolean;
+  seasonalityTopN: number;
+  nowMs: number;
   onBack: () => void;
   onRetry: () => void;
   onPageChange: (page: number) => void;
@@ -22,6 +26,7 @@ interface Props {
 
 export function QuestScreen(props: Props) {
   const { status, slow, data, tileBase, placeName, seasonMonth, page, onBack, onRetry, onPageChange } = props;
+  const { seasonality, seasonalityLoading, seasonalityTopN, nowMs } = props;
   const [selected, setSelected] = useState<Target | null>(null);
   const questId = data?.quest.id;
 
@@ -104,11 +109,23 @@ export function QuestScreen(props: Props) {
                 onPageChange={onPageChange}
                 selectedTaxonId={selected?.taxonId}
                 onSelect={setSelected}
+                seasonality={seasonality}
+                seasonalityLoading={seasonalityLoading}
+                seasonalityTopN={seasonalityTopN}
+                nowMs={nowMs}
               />
             </>
           ) : (
             <p className="all-found-line">You've found every species reported here this month. Check back as the season turns.</p>
           )}
+          <section className="export-area" aria-label="Export this quest">
+            <a className="btn-secondary export-link" href={`/api/quests/${data.quest.id}/export.csv`} download>
+              Export CSV
+            </a>
+            <a className="btn-secondary export-link" href={`/api/quests/${data.quest.id}/export.geojson`} download>
+              Export GeoJSON
+            </a>
+          </section>
         </>
       )}
     </main>

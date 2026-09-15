@@ -391,6 +391,65 @@ label {
   color: var(--ink-soft);
 }
 
+/* ---------- Seasonality indicator ---------- */
+.seasonality {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.seasonality-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 24px;
+  flex: 1 1 auto;
+  max-width: 220px;
+  border-bottom: 1px solid var(--line);
+}
+
+.season-bar {
+  flex: 1 1 auto;
+  min-width: 1px;
+  background: var(--line);
+  border-radius: 1px 1px 0 0;
+}
+
+.season-bar.now {
+  background: var(--brand);
+  min-height: 3px;
+}
+
+.seasonality-caption {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.seasonality-skeleton {
+  height: 24px;
+  max-width: 220px;
+  margin-top: 6px;
+}
+
+/* ---------- Export ---------- */
+.export-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.export-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--ink);
+}
+
 /* ---------- Pagination ---------- */
 .pager {
   display: flex;

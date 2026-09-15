@@ -34,3 +34,22 @@ export function formatTimestamp(ms: number): string {
   const d = new Date(ms);
   return `${monthLabel(d.getUTCMonth() + 1)} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
+
+// The simple week of year in UTC (1..53), matching iNat's week_of_year
+// buckets closely enough to highlight "this week" on the indicator: day of
+// year divided into 7-day windows from January 1.
+export function weekOfYear(dateMs: number): number {
+  const d = new Date(dateMs);
+  const utcMidnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const jan1 = Date.UTC(d.getUTCFullYear(), 0, 1);
+  const dayOfYear = Math.floor((utcMidnight - jan1) / 86_400_000) + 1;
+  return Math.min(53, Math.floor((dayOfYear - 1) / 7) + 1);
+}
+
+// Month (1..12) of a week's representative date, so a peak week maps to a
+// month name for the caption. Uses a fixed non-leap year; the drift is at
+// most a day and never changes the label meaningfully.
+export function monthOfWeek(week: number): number {
+  const d = new Date(Date.UTC(2001, 0, 1 + (week - 1) * 7));
+  return d.getUTCMonth() + 1;
+}

@@ -19,6 +19,13 @@ with how many different people find it, so a species many observers see
 outranks one a single power user photographed a hundred times. It is a guide,
 not a guarantee.
 
+The top targets each carry a small week-of-year strip showing when people
+find that species at that place, with this week highlighted, so you can see
+whether this is the right week without re-running anything. Your quest is
+also yours to keep: two links on the quest screen download it as CSV or
+GeoJSON, with each target at the center of the searched place. The export
+holds public data only and never per-species coordinates.
+
 ## How it works
 
 The app is one web service: a Fastify API that also serves a React frontend

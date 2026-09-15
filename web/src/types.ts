@@ -78,6 +78,7 @@ export interface DemoDescriptor {
 
 export interface AppConfig {
   inatTileBase?: string;
+  seasonalityTopN?: number;
   umamiWebsiteId?: string;
   umamiUrl?: string;
   sentryDsn?: string;

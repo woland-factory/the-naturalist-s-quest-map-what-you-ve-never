@@ -44,6 +44,56 @@ test("opening the demo quest shows the map, a ranked list, and a self-checked-of
   await expect(page.getByText(/\d+ found · \d+ to go/)).toBeVisible();
 });
 
+test("top targets on the demo quest carry the seasonality indicator, lower ranks do not", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open" }).first().click();
+  await expect(page.locator(".target-card:not(.skeleton)").first()).toBeVisible();
+
+  // Pre-warmed from fixtures, so the indicator arrives without a live iNat
+  // call: 53 bars, the current-week highlight, and the Peak caption.
+  const firstIndicator = page.locator(".target-card .seasonality").first();
+  await expect(firstIndicator).toBeVisible();
+  await expect(firstIndicator.locator(".season-bar")).toHaveCount(53);
+  await expect(firstIndicator.getByText(/^Peak [A-Z][a-z]+$/)).toBeVisible();
+  await expect(firstIndicator).toHaveAttribute("aria-label", /Seen most often in [A-Z][a-z]+ here\./);
+
+  // Ranks beyond the top-N carry no indicator (page 2 is ranks 21+).
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.locator(".target-card:not(.skeleton)").first()).toBeVisible();
+  await expect(page.locator(".target-card .seasonality")).toHaveCount(0);
+});
+
+test("the quest screen offers CSV and GeoJSON downloads of the quest", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open" }).first().click();
+  await expect(page.locator(".target-card:not(.skeleton)").first()).toBeVisible();
+
+  const csvLink = page.getByRole("link", { name: "Export CSV" });
+  const geoLink = page.getByRole("link", { name: "Export GeoJSON" });
+  await expect(csvLink).toBeVisible();
+  await expect(geoLink).toBeVisible();
+  await expect(csvLink).toHaveAttribute("href", /\/api\/quests\/[0-9a-f-]{36}\/export\.csv$/);
+  await expect(geoLink).toHaveAttribute("href", /\/api\/quests\/[0-9a-f-]{36}\/export\.geojson$/);
+  await expect(csvLink).toHaveAttribute("download", "");
+  await expect(geoLink).toHaveAttribute("download", "");
+
+  // The endpoints really serve the files the links point to.
+  const csvHref = (await csvLink.getAttribute("href"))!;
+  const csvRes = await page.request.get(csvHref);
+  expect(csvRes.status()).toBe(200);
+  expect(csvRes.headers()["content-type"]).toContain("text/csv");
+  expect(csvRes.headers()["content-disposition"]).toContain("attachment");
+  const csvBody = await csvRes.text();
+  expect(csvBody).toContain("status,common_name,scientific_name,taxon_id");
+  expect(csvBody).toContain("found,");
+  const geoRes = await page.request.get((await geoLink.getAttribute("href"))!);
+  expect(geoRes.status()).toBe(200);
+  expect(geoRes.headers()["content-type"]).toContain("application/geo+json");
+  const geo = (await geoRes.json()) as { type: string; features: unknown[] };
+  expect(geo.type).toBe("FeatureCollection");
+  expect(geo.features.length).toBeGreaterThan(0);
+});
+
 test("failed map tiles show the fallback and the list stays usable", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open" }).first().click();

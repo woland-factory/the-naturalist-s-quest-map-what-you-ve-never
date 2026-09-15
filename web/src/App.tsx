@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { StartScreen, type QuestInput } from "./components/StartScreen.js";
 import { MyQuestsScreen } from "./components/MyQuestsScreen.js";
 import { QuestScreen, type QuestStatus } from "./components/QuestScreen.js";
-import { createQuest, deleteQuest, getQuest, listQuests, getConfig, ApiError } from "./api.js";
+import { createQuest, deleteQuest, getQuest, getSeasonality, listQuests, getConfig, ApiError } from "./api.js";
 import { resolveQuestStatus } from "./questStatus.js";
 import type { AppConfig, QuestResponse, QuestSummary } from "./types.js";
 
@@ -26,6 +26,8 @@ export function App() {
   const [questStatus, setQuestStatus] = useState<QuestStatus>("loading");
   const [questPage, setQuestPage] = useState(1);
   const [slow, setSlow] = useState(false);
+  const [seasonality, setSeasonality] = useState<Map<number, number[] | null>>(new Map());
+  const [seasonalityLoading, setSeasonalityLoading] = useState(false);
   const openIdRef = useRef<string | null>(null);
   const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reqSeq = useRef(0);
@@ -72,6 +74,25 @@ export function App() {
       cancelled = true;
     };
   }, []);
+
+  // One seasonality fetch per opened quest, fired after the quest loads so
+  // the indicator fills in without ever blocking the list. Keyed on the
+  // quest id: page changes keep the batch, a different quest resets it.
+  const openedQuestId = questData?.quest.id;
+  useEffect(() => {
+    if (!openedQuestId) return;
+    let cancelled = false;
+    setSeasonality(new Map());
+    setSeasonalityLoading(true);
+    void getSeasonality(openedQuestId).then((map) => {
+      if (cancelled) return;
+      setSeasonality(map);
+      setSeasonalityLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [openedQuestId]);
 
   const runQuest = useCallback(
     async (id: string, page: number) => {
@@ -209,6 +230,10 @@ export function App() {
       placeName={questData?.quest.placeName ?? ""}
       seasonMonth={questData?.quest.seasonMonth ?? 1}
       page={questPage}
+      seasonality={seasonality}
+      seasonalityLoading={seasonalityLoading}
+      seasonalityTopN={appConfig.seasonalityTopN ?? 12}
+      nowMs={Date.now()}
       onBack={onQuestBack}
       onRetry={onQuestRetry}
       onPageChange={onQuestPageChange}

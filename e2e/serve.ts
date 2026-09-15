@@ -61,6 +61,14 @@ const mock = createServer((req, res) => {
     res.writeHead(404);
     return res.end("not a tile");
   }
+  // Week-of-year histogram for the seasonality indicator: a late-summer
+  // peak so created quests show the indicator end to end. The seeded demo
+  // quest never reaches here (its histograms are pre-warmed from fixtures).
+  if (u.pathname.endsWith("/observations/histogram")) {
+    const week_of_year: Record<string, number> = {};
+    for (let w = 26; w <= 44; w++) week_of_year[String(w)] = 100 - Math.abs(w - 35) * 10;
+    return json(res, { results: { week_of_year } });
+  }
   if (u.pathname.endsWith("/observations/species_counts")) {
     return json(res, { total_results: 4210, results: species });
   }
@@ -94,6 +102,10 @@ mock.listen(0, "127.0.0.1", async () => {
   const mockPort = typeof address === "object" && address ? address.port : 0;
   process.env.INAT_API_BASE = `http://127.0.0.1:${mockPort}/v1`;
   process.env.INAT_RATE_LIMIT_RPS = "0"; // no throttling against the local stub
+  // The whole suite runs from one IP in about a minute; the production
+  // per-IP limit would trip on the harness, not on a real user. The limiter
+  // behavior itself is covered by the API unit tests.
+  process.env.RATE_LIMIT_MAX = "1000";
   process.env.SEED_DEMO = "1";
   process.env.PORT = String(port);
 

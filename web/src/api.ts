@@ -68,6 +68,20 @@ export async function getQuest(id: string, page = 1, perPage?: number): Promise<
   return (await res.json()) as QuestResponse;
 }
 
+// The seasonality batch for a quest's top targets. Non-critical by design:
+// any failure resolves to an empty map so the quest view never breaks over
+// an indicator.
+export async function getSeasonality(id: string): Promise<Map<number, number[] | null>> {
+  try {
+    const res = await fetch(`/api/quests/${id}/seasonality`);
+    if (!res.ok) return new Map();
+    const body = (await res.json()) as { seasonality?: { taxonId: number; weeks: number[] | null }[] };
+    return new Map((body.seasonality ?? []).map((s) => [s.taxonId, s.weeks]));
+  } catch {
+    return new Map();
+  }
+}
+
 export async function deleteQuest(id: string, login: string): Promise<void> {
   const res = await fetch(`/api/quests/${id}?login=${encodeURIComponent(login)}`, { method: "DELETE" });
   if (!res.ok && res.status !== 404) throw await parseError(res);

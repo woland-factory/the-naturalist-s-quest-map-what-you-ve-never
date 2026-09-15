@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Seasonality } from "./Seasonality.js";
 import type { Target, TargetsResponse } from "../types.js";
 
 // The ranked list, shared by any screen that shows targets. A row can be
 // selectable: tapping it picks that species for the map above the list.
+// The top-ranked open targets additionally carry the week-of-year
+// seasonality indicator once the quest's batch arrives.
 
 export function TargetList({
   data,
@@ -10,12 +13,20 @@ export function TargetList({
   onPageChange,
   selectedTaxonId,
   onSelect,
+  seasonality,
+  seasonalityLoading,
+  seasonalityTopN,
+  nowMs,
 }: {
   data: TargetsResponse;
   page: number;
   onPageChange: (page: number) => void;
   selectedTaxonId?: number;
   onSelect?: (target: Target) => void;
+  seasonality?: Map<number, number[] | null>;
+  seasonalityLoading?: boolean;
+  seasonalityTopN?: number;
+  nowMs?: number;
 }) {
   const totalPages = Math.max(1, Math.ceil(data.totalTargets / data.perPage));
   const start = (page - 1) * data.perPage + 1;
@@ -27,15 +38,24 @@ export function TargetList({
         Showing {start} to {end} of {data.totalTargets} targets.
       </p>
       <ul className="target-list">
-        {data.results.map((t, i) => (
-          <TargetCard
-            key={t.taxonId}
-            target={t}
-            rank={start + i}
-            selected={t.taxonId === selectedTaxonId}
-            onSelect={onSelect}
-          />
-        ))}
+        {data.results.map((t, i) => {
+          const rank = start + i;
+          const topTarget = seasonality !== undefined && rank <= (seasonalityTopN ?? 0);
+          return (
+            <TargetCard
+              key={t.taxonId}
+              target={t}
+              rank={rank}
+              selected={t.taxonId === selectedTaxonId}
+              onSelect={onSelect}
+              seasonality={
+                topTarget ? (
+                  <Seasonality weeks={seasonality.get(t.taxonId)} nowMs={nowMs ?? 0} loading={seasonalityLoading} />
+                ) : null
+              }
+            />
+          );
+        })}
       </ul>
       {totalPages > 1 && (
         <nav className="pager" aria-label="Pagination">
@@ -64,11 +84,13 @@ function TargetCard({
   rank,
   selected,
   onSelect,
+  seasonality,
 }: {
   target: Target;
   rank: number;
   selected: boolean;
   onSelect?: (target: Target) => void;
+  seasonality?: ReactNode;
 }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const showPhoto = target.photoUrl && !photoFailed;
@@ -101,6 +123,7 @@ function TargetCard({
           {target.obsCount.toLocaleString()} sightings
           {target.distinctObservers !== null ? ` by ${target.distinctObservers.toLocaleString()} people` : ""}
         </p>
+        {seasonality}
       </div>
     </>
   );
