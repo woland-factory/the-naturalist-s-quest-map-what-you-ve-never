@@ -27,12 +27,21 @@ interface FetchOpts {
   observerCount?: number;
   observersThrow?: boolean;
   placeDetailThrow?: boolean;
+  histogram?: Record<string, number>; // week_of_year payload for /observations/histogram
+  histogramThrowFor?: number; // taxon id whose histogram fetch fails
 }
 
 function makeFetch(opts: FetchOpts = {}) {
-  const calls = { users: 0, places: 0, placeDetail: 0, species: 0, observers: 0, observations: 0, speciesMonths: [] as string[] };
+  const calls = { users: 0, places: 0, placeDetail: 0, species: 0, observers: 0, observations: 0, histogram: 0, speciesMonths: [] as string[] };
   const fetchImpl = vi.fn(async (url: string) => {
     const u = new URL(url);
+    if (u.pathname.endsWith("/observations/histogram")) {
+      calls.histogram++;
+      if (opts.histogramThrowFor !== undefined && u.searchParams.get("taxon_id") === String(opts.histogramThrowFor)) {
+        throw new TypeError("network down");
+      }
+      return resp(200, { results: { week_of_year: opts.histogram ?? { "27": 40, "28": 60, "29": 50 } } });
+    }
     if (u.pathname.endsWith("/users/autocomplete")) {
       calls.users++;
       return resp(200, { results: opts.users ?? [{ id: 1, login: "kueda", name: "Ken" }] });
@@ -107,6 +116,7 @@ async function buildTestApp(args: {
       placeTtlSeconds: config.placeTtlSeconds,
       targetsTtlSeconds: config.targetsTtlSeconds,
       meltPollTtlSeconds: config.meltPollTtlSeconds,
+      seasonalityTtlSeconds: config.seasonalityTtlSeconds,
       fetchImpl: args.fetchImpl,
     });
   const tracker = args.sentrySdk ? createErrorTracker(config, args.sentrySdk) : undefined;
@@ -145,6 +155,7 @@ describe("GET /api/config", () => {
     const r1 = await withUmami.inject({ method: "GET", url: "/api/config" });
     expect(r1.json()).toEqual({
       inatTileBase: "https://api.inaturalist.org/v1",
+      seasonalityTopN: 12,
       umamiWebsiteId: "abc",
       umamiUrl: "https://umami.test/script.js",
     });
@@ -152,7 +163,7 @@ describe("GET /api/config", () => {
 
     const noUmami = await buildTestApp({ fetchImpl: makeFetch().fetchImpl, config: testConfig({ inatApiBase: "https://api.inaturalist.org/v1" }) });
     const r2 = await noUmami.inject({ method: "GET", url: "/api/config" });
-    expect(r2.json()).toEqual({ inatTileBase: "https://api.inaturalist.org/v1" });
+    expect(r2.json()).toEqual({ inatTileBase: "https://api.inaturalist.org/v1", seasonalityTopN: 12 });
     expect(r2.body).not.toContain("INTERNAL_SERVICE_KEY");
     await noUmami.close();
   });
@@ -515,6 +526,150 @@ describe("GET /api/quests/:id", () => {
   });
 });
 
+describe("GET /api/quests/:id/seasonality", () => {
+  it("returns one length-53 entry per top target in rank order, and a repeat call issues zero histogram fetches", async () => {
+    const { fetchImpl, calls } = makeFetch({ species: speciesFixture(10, 900), observerCount: 5 });
+    const app = await buildTestApp({ fetchImpl, config: testConfig({ seasonalityTopN: 3, observerEnrichTopK: 3 }) });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+
+    const first = await app.inject({ method: "GET", url: `/api/quests/${id}/seasonality` });
+    expect(first.statusCode).toBe(200);
+    const body = first.json();
+    expect(body.seasonality).toHaveLength(3);
+    // Rank order matches the built list's head.
+    expect(body.seasonality.map((s: { taxonId: number }) => s.taxonId)).toEqual(
+      created.json().results.slice(0, 3).map((t: { taxonId: number }) => t.taxonId),
+    );
+    for (const entry of body.seasonality) {
+      expect(entry.weeks).toHaveLength(53);
+      expect(entry.weeks[27]).toBe(60); // week 28 from the canned payload
+    }
+    expect(calls.histogram).toBe(3);
+
+    // Warm repeat: every histogram is a cache hit, zero new fetches.
+    const second = await app.inject({ method: "GET", url: `/api/quests/${id}/seasonality` });
+    expect(second.statusCode).toBe(200);
+    expect(second.json().seasonality).toHaveLength(3);
+    expect(calls.histogram).toBe(3);
+    await app.close();
+  });
+
+  it("degrades a single failed histogram to weeks: null while the others still return", async () => {
+    const { fetchImpl } = makeFetch({ species: speciesFixture(10, 900), observerCount: 5, histogramThrowFor: 101 });
+    const app = await buildTestApp({ fetchImpl, config: testConfig({ seasonalityTopN: 3, observerEnrichTopK: 3 }) });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+
+    const res = await app.inject({ method: "GET", url: `/api/quests/${id}/seasonality` });
+    expect(res.statusCode).toBe(200);
+    const byTaxon = new Map(res.json().seasonality.map((s: { taxonId: number; weeks: number[] | null }) => [s.taxonId, s.weeks]));
+    expect(byTaxon.get(101)).toBeNull();
+    expect(byTaxon.get(100)).toHaveLength(53);
+    expect(byTaxon.get(102)).toHaveLength(53);
+    await app.close();
+  });
+
+  it("skips uncached fetches once the budget is spent, returning null weeks", async () => {
+    const { fetchImpl, calls } = makeFetch({ species: speciesFixture(10, 900), observerCount: 5 });
+    const app = await buildTestApp({ fetchImpl, config: testConfig({ seasonalityTopN: 3, observerEnrichTopK: 3, seasonalityBudgetMs: 0 }) });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+
+    const res = await app.inject({ method: "GET", url: `/api/quests/${id}/seasonality` });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().seasonality).toHaveLength(3);
+    expect(res.json().seasonality.every((s: { weeks: number[] | null }) => s.weeks === null)).toBe(true);
+    expect(calls.histogram).toBe(0);
+    await app.close();
+  });
+
+  it("returns 404 for an unknown quest id", async () => {
+    const app = await buildTestApp({ fetchImpl: makeFetch().fetchImpl });
+    const res = await app.inject({ method: "GET", url: "/api/quests/22222222-2222-4222-8222-222222222222/seasonality" });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: "not_found", message: "That quest is not here." });
+    await app.close();
+  });
+});
+
+describe("GET /api/quests/:id/export.csv and export.geojson", () => {
+  it("returns an attachment CSV with header, correct rows, and no iNat call on a warm quest", async () => {
+    const { fetchImpl, calls } = makeFetch({ species: speciesFixture(5, 50), observerCount: 5 });
+    const app = await buildTestApp({ fetchImpl, config: testConfig({ observerEnrichTopK: 2 }) });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+    const speciesBefore = calls.species;
+    const observersBefore = calls.observers;
+
+    const res = await app.inject({ method: "GET", url: `/api/quests/${id}/export.csv` });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/csv");
+    expect(res.headers["content-disposition"]).toBe('attachment; filename="quest-california-kueda.csv"');
+    const lines = res.body.trim().split(/\r\n/);
+    expect(lines[0]).toBe(
+      "status,common_name,scientific_name,taxon_id,observation_count,distinct_observers,rank_score,found_on,observation_url",
+    );
+    expect(lines).toHaveLength(6); // header + 5 open targets
+    expect(lines[1]).toMatch(/^open,Common 0,Taxon 0,100,1000,5,/);
+    // Export of a warm quest is a pure cache read: no species/observers/
+    // observations fetch happened for it.
+    expect(calls.species).toBe(speciesBefore);
+    expect(calls.observers).toBe(observersBefore);
+    expect(calls.observations).toBe(0);
+    await app.close();
+  });
+
+  it("returns a valid GeoJSON FeatureCollection at the place centroid with public fields only", async () => {
+    const app = await buildTestApp({ fetchImpl: makeFetch({ species: speciesFixture(4, 40), observerCount: 5 }).fetchImpl });
+    const created = await app.inject({ method: "POST", url: "/api/quests", payload: CREATE });
+    const id = created.json().quest.id;
+
+    const res = await app.inject({ method: "GET", url: `/api/quests/${id}/export.geojson` });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toContain("application/geo+json");
+    expect(res.headers["content-disposition"]).toBe('attachment; filename="quest-california-kueda.geojson"');
+    const body = res.json();
+    expect(body.type).toBe("FeatureCollection");
+    expect(body.bbox).toEqual([-124.5, 32.5, -114, 42]);
+    expect(body.features).toHaveLength(4);
+    const feature = body.features[0];
+    expect(feature.geometry).toEqual({ type: "Point", coordinates: [-119.25, 37.25] });
+    expect(feature.properties).toMatchObject({ status: "open", place_name: "California", login: "kueda" });
+    await app.close();
+  });
+
+  it("exports the seeded demo quest offline: found rows first with provenance, zero upstream calls", async () => {
+    const { fetchImpl, calls } = makeFetch();
+    const app = await buildTestApp({
+      fetchImpl,
+      config: testConfig({ seedDemo: true, seedDemoLogin: "kueda", seedDemoPlaceId: 14, seedDemoPlaceName: "California" }),
+    });
+    const res = await app.inject({ method: "GET", url: "/api/quests/00000000-0000-4000-8000-000000000001/export.csv" });
+    expect(res.statusCode).toBe(200);
+    const lines = res.body.trim().split(/\r\n/);
+    const foundLines = lines.filter((l) => l.startsWith("found,"));
+    expect(foundLines.length).toBeGreaterThanOrEqual(1);
+    expect(lines[1]).toMatch(/^found,/); // found rows come before open rows
+    expect(res.body).toContain("https://www.inaturalist.org/observations/");
+    // The demo export runs entirely from the pre-warmed cache and the store.
+    expect(calls.species).toBe(0);
+    expect(calls.observers).toBe(0);
+    expect(calls.observations).toBe(0);
+    await app.close();
+  });
+
+  it("returns 404 for an unknown quest id on both formats", async () => {
+    const app = await buildTestApp({ fetchImpl: makeFetch().fetchImpl });
+    for (const ext of ["csv", "geojson"]) {
+      const res = await app.inject({ method: "GET", url: `/api/quests/22222222-2222-4222-8222-222222222222/export.${ext}` });
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toEqual({ error: "not_found", message: "That quest is not here." });
+    }
+    await app.close();
+  });
+});
+
 describe("SEED_DEMO melt", () => {
   const DEMO_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -534,6 +689,24 @@ describe("SEED_DEMO melt", () => {
     expect(first.observationUrl).toMatch(/inaturalist\.org\/observations\/\d+/);
     expect(first.observedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(typeof first.photoUrl).toBe("string");
+    await app.close();
+  });
+});
+
+describe("SEED_DEMO seasonality", () => {
+  it("serves demo seasonality for every top target from the fixture pre-warm with zero histogram fetches", async () => {
+    const { fetchImpl, calls } = makeFetch();
+    const config = testConfig({ seedDemo: true, seedDemoLogin: "kueda", seedDemoPlaceId: 14, seedDemoPlaceName: "California" });
+    const app = await buildTestApp({ fetchImpl, config });
+    const res = await app.inject({ method: "GET", url: "/api/quests/00000000-0000-4000-8000-000000000001/seasonality" });
+    expect(res.statusCode).toBe(200);
+    const entries = res.json().seasonality as { taxonId: number; weeks: number[] | null }[];
+    expect(entries).toHaveLength(config.seasonalityTopN);
+    for (const entry of entries) {
+      expect(entry.weeks).toHaveLength(53);
+      expect(entry.weeks!.some((w) => w > 0)).toBe(true);
+    }
+    expect(calls.histogram).toBe(0);
     await app.close();
   });
 });

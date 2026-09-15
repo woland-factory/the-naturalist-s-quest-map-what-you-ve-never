@@ -1,5 +1,5 @@
 import type { Cache } from "../cache.js";
-import { meltKey, observersKey, placeDetailKey, placeKey, userKey } from "../cache.js";
+import { histogramKey, meltKey, observersKey, placeDetailKey, placeKey, userKey } from "../cache.js";
 import { INatError } from "./types.js";
 import type {
   BBox,
@@ -57,6 +57,7 @@ export interface INatClientOptions {
   placeTtlSeconds: number;
   targetsTtlSeconds: number;
   meltPollTtlSeconds: number;
+  seasonalityTtlSeconds: number;
   fetchImpl?: typeof fetch;
 }
 
@@ -319,6 +320,35 @@ export class INatClient {
     }
     this.opts.cache.set(key, mapped, this.opts.meltPollTtlSeconds);
     return mapped;
+  }
+
+  /**
+   * Week-of-year observation histogram for one taxon at a place: the
+   * full-year climatology behind the seasonality indicator. Returned as a
+   * dense length-53 array (weeks[w-1] = count for week w, missing weeks 0)
+   * and cached long, so a warm view issues zero histogram calls.
+   */
+  async weekOfYearHistogram(args: { taxonId: number; placeId: number }): Promise<number[]> {
+    const key = histogramKey(args.taxonId, args.placeId);
+    const cached = this.opts.cache.get<number[]>(key);
+    if (cached !== undefined) return cached;
+
+    const url = this.url("/observations/histogram", {
+      taxon_id: args.taxonId,
+      place_id: args.placeId,
+      date_field: "observed",
+      interval: "week_of_year",
+      verifiable: "true",
+    });
+    const data = await this.request<{ results?: { week_of_year?: Record<string, number> } }>(url);
+    const sparse = data.results?.week_of_year ?? {};
+    const weeks = new Array<number>(53).fill(0);
+    for (const [k, v] of Object.entries(sparse)) {
+      const w = Number(k);
+      if (Number.isInteger(w) && w >= 1 && w <= 53 && typeof v === "number") weeks[w - 1] = v;
+    }
+    this.opts.cache.set(key, weeks, this.opts.seasonalityTtlSeconds);
+    return weeks;
   }
 }
 

@@ -9,7 +9,12 @@ export function registerConfig(app: FastifyInstance, config: AppConfig): void {
     // The public iNaturalist base the browser loads map tiles from. It is a
     // public endpoint, not a secret, and the frontend needs it to build the
     // per-taxon tile layer without routing tiles through our JSON adapter.
-    const body: Record<string, unknown> = { inatTileBase: config.inatApiBase };
+    const body: Record<string, unknown> = {
+      inatTileBase: config.inatApiBase,
+      // How many top-ranked open targets carry the seasonality indicator.
+      // Kept in one place server-side and read by the list on boot.
+      seasonalityTopN: config.seasonalityTopN,
+    };
     if (config.umamiWebsiteId && config.umamiUrl) {
       body.umamiWebsiteId = config.umamiWebsiteId;
       body.umamiUrl = config.umamiUrl;

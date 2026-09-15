@@ -34,6 +34,9 @@ export interface AppConfig {
   meltPollTtlSeconds: number;
   observerEnrichTopK: number;
   requestEnrichBudgetMs: number;
+  seasonalityTtlSeconds: number;
+  seasonalityTopN: number;
+  seasonalityBudgetMs: number;
   cacheMaxEntries: number;
   rateLimitMax: number;
   rateLimitWindow: string;
@@ -67,6 +70,9 @@ export function loadConfig(): AppConfig {
     meltPollTtlSeconds: num("MELT_POLL_TTL_SECONDS", 60),
     observerEnrichTopK: num("OBSERVER_ENRICH_TOP_K", 25),
     requestEnrichBudgetMs: num("REQUEST_ENRICH_BUDGET_MS", 30000),
+    seasonalityTtlSeconds: num("SEASONALITY_TTL_SECONDS", 604800),
+    seasonalityTopN: num("SEASONALITY_TOP_N", 12),
+    seasonalityBudgetMs: num("SEASONALITY_BUDGET_MS", 20000),
     cacheMaxEntries: num("CACHE_MAX_ENTRIES", 500),
     rateLimitMax: num("RATE_LIMIT_MAX", 60),
     rateLimitWindow: str("RATE_LIMIT_WINDOW", "1 minute"),

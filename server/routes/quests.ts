@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import type { AppConfig } from "../config.js";
-import type { Cache } from "../cache.js";
+import { histogramKey, type Cache } from "../cache.js";
 import type { INatClient } from "../inat/client.js";
 import { INatError, type BBox } from "../inat/types.js";
 import { buildTargets, paginate, resolveSeasonMonth, RANK_BASIS, RANKING_NOTE, type BuiltTargets } from "../targets.js";
+import { placeSlug, toCsv, toGeoJson } from "../export.js";
 import { pollMelt } from "../melt.js";
 import type { MeltedTarget, QuestRecord, QuestStore } from "../store/quests.js";
 
@@ -257,6 +258,137 @@ export function registerQuests(app: FastifyInstance, deps: QuestDeps): void {
           }) ?? rec;
 
         return questPayload(updated, built, page, perPage, meltRes.newlyMelted);
+      } catch (err) {
+        if (err instanceof INatError) {
+          return reply.code(502).send({ error: "upstream", message: "iNaturalist is slow right now. Try again in a moment." });
+        }
+        throw err;
+      }
+    },
+  );
+
+  const idOnlySchema = {
+    params: {
+      type: "object",
+      required: ["id"],
+      properties: { id: { type: "string", pattern: UUID_PATTERN } },
+    },
+  };
+
+  // Rebuild (or cache-read) the open target list for a quest record. On a
+  // warm quest this is a pure cache hit and touches iNaturalist zero times.
+  function builtFor(rec: QuestRecord): Promise<BuiltTargets> {
+    const month = resolveSeasonMonth(now);
+    return buildTargets(
+      { client, cache, config, now },
+      { login: rec.loginDisplay, placeId: rec.placeId, month, taxonRootId: rec.taxonRootId ?? undefined },
+    );
+  }
+
+  // The quest-scoped seasonality batch: week-of-year histograms for the top
+  // ranked open targets in one round trip. Loaded by the client after the
+  // list renders, so it never blocks the quest view. Warm histograms are
+  // pure cache reads; only cold ones spend the fetch budget, and a single
+  // failure degrades that taxon to null instead of failing the endpoint.
+  app.get<{ Params: { id: string } }>(
+    "/api/quests/:id/seasonality",
+    { schema: idOnlySchema },
+    async (req, reply) => {
+      const rec = store.get(req.params.id);
+      if (!rec) {
+        return reply.code(404).send({ error: "not_found", message: "That quest is not here." });
+      }
+
+      let built: BuiltTargets;
+      try {
+        built = await builtFor(rec);
+      } catch (err) {
+        if (err instanceof INatError) {
+          return reply.code(502).send({ error: "upstream", message: "iNaturalist is slow right now. Try again in a moment." });
+        }
+        throw err;
+      }
+
+      const top = built.targets.slice(0, config.seasonalityTopN);
+      const startedAt = now();
+      const seasonality: { taxonId: number; weeks: number[] | null }[] = [];
+      for (const target of top) {
+        const cached = cache.get<number[]>(histogramKey(target.taxonId, rec.placeId));
+        if (cached !== undefined) {
+          seasonality.push({ taxonId: target.taxonId, weeks: cached });
+          continue;
+        }
+        if (now() - startedAt >= config.seasonalityBudgetMs) {
+          seasonality.push({ taxonId: target.taxonId, weeks: null });
+          continue;
+        }
+        try {
+          const weeks = await client.weekOfYearHistogram({ taxonId: target.taxonId, placeId: rec.placeId });
+          seasonality.push({ taxonId: target.taxonId, weeks });
+        } catch {
+          // Best-effort per taxon: the indicator is an enhancement, so one
+          // failed histogram never fails the batch.
+          seasonality.push({ taxonId: target.taxonId, weeks: null });
+        }
+      }
+
+      return { seasonality };
+    },
+  );
+
+  // Quest exports: the living record leaves the app as a clean file the
+  // user keeps. Public data only; on a warm quest neither endpoint touches
+  // iNaturalist.
+  async function exportParts(rec: QuestRecord) {
+    const built = await builtFor(rec);
+    return {
+      quest: { login: rec.loginDisplay, placeName: rec.placeName, placeBbox: rec.placeBbox },
+      open: built.targets,
+      melted: rec.melted,
+    };
+  }
+
+  function exportFilename(rec: QuestRecord, ext: string): string {
+    return `quest-${placeSlug(rec.placeName)}-${rec.loginDisplay}.${ext}`;
+  }
+
+  app.get<{ Params: { id: string } }>(
+    "/api/quests/:id/export.csv",
+    { schema: idOnlySchema },
+    async (req, reply) => {
+      const rec = store.get(req.params.id);
+      if (!rec) {
+        return reply.code(404).send({ error: "not_found", message: "That quest is not here." });
+      }
+      try {
+        const { open, melted } = await exportParts(rec);
+        return reply
+          .header("Content-Type", "text/csv; charset=utf-8")
+          .header("Content-Disposition", `attachment; filename="${exportFilename(rec, "csv")}"`)
+          .send(toCsv(open, melted));
+      } catch (err) {
+        if (err instanceof INatError) {
+          return reply.code(502).send({ error: "upstream", message: "iNaturalist is slow right now. Try again in a moment." });
+        }
+        throw err;
+      }
+    },
+  );
+
+  app.get<{ Params: { id: string } }>(
+    "/api/quests/:id/export.geojson",
+    { schema: idOnlySchema },
+    async (req, reply) => {
+      const rec = store.get(req.params.id);
+      if (!rec) {
+        return reply.code(404).send({ error: "not_found", message: "That quest is not here." });
+      }
+      try {
+        const { quest, open, melted } = await exportParts(rec);
+        return reply
+          .header("Content-Type", "application/geo+json; charset=utf-8")
+          .header("Content-Disposition", `attachment; filename="${exportFilename(rec, "geojson")}"`)
+          .send(JSON.stringify(toGeoJson(quest, open, melted)));
       } catch (err) {
         if (err instanceof INatError) {
           return reply.code(502).send({ error: "upstream", message: "iNaturalist is slow right now. Try again in a moment." });

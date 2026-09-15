@@ -98,3 +98,10 @@ export function placeDetailKey(placeId: number): string {
 export function meltKey(placeId: number, login: string): string {
   return `melt:v1:${placeId}:${login.toLowerCase()}`;
 }
+
+// Week-of-year histogram per (taxon, place). No month in the key: the
+// histogram is the full-year climatology, stable across seasons, so it is
+// safe to cache long and share between quests at the same place.
+export function histogramKey(taxonId: number, placeId: number): string {
+  return `hist:v1:${taxonId}:${placeId}`;
+}

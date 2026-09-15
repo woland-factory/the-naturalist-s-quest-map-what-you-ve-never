@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { AppConfig } from "./config.js";
 import type { Cache } from "./cache.js";
-import { targetsKey, userKey } from "./cache.js";
+import { histogramKey, targetsKey, userKey } from "./cache.js";
 import { blendTargets } from "./inat/ranking.js";
 import { resolveSeasonMonth, type BuiltTargets } from "./targets.js";
 import type { MeltedTarget, QuestStore } from "./store/quests.js";
@@ -22,7 +22,9 @@ import type { BBox, SpeciesCountsResponse, UserProfile } from "./inat/types.js";
 // demo-melted.json holds real PUBLIC research-grade observations by the demo
 // user at this place (public observation ids, urls, photos and dates), so the
 // staging demo shows a target that has already checked itself off, baked from
-// a fixture rather than a live poll.
+// a fixture rather than a live poll. demo-histograms.json holds real PUBLIC
+// week-of-year histogram snapshots (observations/histogram, verifiable=true)
+// for the demo taxa at this place: aggregate counts only, no PII.
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -65,6 +67,17 @@ export function seedDemo(cache: Cache, config: AppConfig, store: QuestStore): vo
     built,
     config.targetsTtlSeconds,
   );
+
+  // Pre-warm week-of-year histograms for the demo's top targets from the
+  // fixture (public iNaturalist snapshots), so the seasonality indicator
+  // shows on staging without a single live histogram call.
+  const histograms = readFixture<Record<string, number[]>>("demo-histograms.json");
+  for (const target of targets.slice(0, config.seasonalityTopN)) {
+    const weeks = histograms[String(target.taxonId)];
+    if (weeks) {
+      cache.set(histogramKey(target.taxonId, config.seedDemoPlaceId), weeks, config.seasonalityTtlSeconds);
+    }
+  }
 
   // Pre-warm the demo user so creating/opening validates without any upstream
   // call, keeping the whole demo path offline and instant.

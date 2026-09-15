@@ -23,6 +23,7 @@ function makeClient(fetchImpl: typeof fetch, rps = 0) {
     placeTtlSeconds: 3600,
     targetsTtlSeconds: 3600,
     meltPollTtlSeconds: 60,
+    seasonalityTtlSeconds: 604800,
     fetchImpl,
   });
   return { client, cache };
@@ -170,12 +171,53 @@ describe("INatClient recentConfirmedObservations", () => {
       placeTtlSeconds: 3600,
       targetsTtlSeconds: 3600,
       meltPollTtlSeconds: 60,
+      seasonalityTtlSeconds: 604800,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
     await client.recentConfirmedObservations({ login: "kueda", placeId: 14, perPage: 200 });
     expect(acquire).toHaveBeenCalled();
     // A repeat within the TTL is a cache hit: no second upstream fetch.
     await client.recentConfirmedObservations({ login: "kueda", placeId: 14, perPage: 200 });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("INatClient weekOfYearHistogram", () => {
+  it("requests the histogram params and parses a sparse week_of_year into a dense length-53 array", async () => {
+    const fetchImpl = vi.fn(async (url: string) => {
+      expect(url).toContain("/observations/histogram");
+      expect(url).toContain("taxon_id=57665");
+      expect(url).toContain("place_id=14");
+      expect(url).toContain("date_field=observed");
+      expect(url).toContain("interval=week_of_year");
+      expect(url).toContain("verifiable=true");
+      return resp(200, { results: { week_of_year: { "3": 7, "27": 452, "53": 2 } } });
+    });
+    const { client } = makeClient(fetchImpl as unknown as typeof fetch);
+    const weeks = await client.weekOfYearHistogram({ taxonId: 57665, placeId: 14 });
+    expect(weeks).toHaveLength(53);
+    expect(weeks[2]).toBe(7);
+    expect(weeks[26]).toBe(452);
+    expect(weeks[52]).toBe(2);
+    expect(weeks[0]).toBe(0); // missing weeks are dense zeros
+    expect(weeks.reduce((a, b) => a + b, 0)).toBe(461);
+  });
+
+  it("returns all zeros for an empty or absent week_of_year object", async () => {
+    const fetchImpl = vi.fn(async () => resp(200, { results: {} }));
+    const { client } = makeClient(fetchImpl as unknown as typeof fetch);
+    const weeks = await client.weekOfYearHistogram({ taxonId: 1, placeId: 14 });
+    expect(weeks).toHaveLength(53);
+    expect(weeks.every((w) => w === 0)).toBe(true);
+  });
+
+  it("serves a repeat (taxonId, placeId) from cache with no second fetch", async () => {
+    const fetchImpl = vi.fn(async () => resp(200, { results: { week_of_year: { "10": 5 } } }));
+    const { client } = makeClient(fetchImpl as unknown as typeof fetch);
+    const a = await client.weekOfYearHistogram({ taxonId: 42, placeId: 14 });
+    const b = await client.weekOfYearHistogram({ taxonId: 42, placeId: 14 });
+    expect(a[9]).toBe(5);
+    expect(b).toEqual(a);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

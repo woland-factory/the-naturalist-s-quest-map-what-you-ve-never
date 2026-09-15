@@ -45,6 +45,7 @@ export async function buildApp(options: BuildOptions = {}): Promise<FastifyInsta
       placeTtlSeconds: config.placeTtlSeconds,
       targetsTtlSeconds: config.targetsTtlSeconds,
       meltPollTtlSeconds: config.meltPollTtlSeconds,
+      seasonalityTtlSeconds: config.seasonalityTtlSeconds,
     });
   const tracker = options.tracker ?? createErrorTracker(config, options.sentrySdk);
   await tracker.init();
